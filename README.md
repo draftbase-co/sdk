@@ -25,9 +25,9 @@ Use a `delivery`-scoped key for the top-level `getEntries`/`getEntry`/`graphql` 
 ```ts
 const { entries, nextCursor } = await draftbase.getEntries({
   contentTypeId: "blogPost", // optional
-  locale: "en-US",           // optional
-  limit: 25,                 // optional, max 100, default 25
-  after: nextCursor,         // optional, cursor pagination
+  locale: "en-US", // optional
+  limit: 25, // optional, max 100, default 25
+  after: nextCursor, // optional, cursor pagination
 });
 
 const entry = await draftbase.getEntry("<entry id>"); // null if not found
@@ -81,14 +81,21 @@ await draftbase.contentTypes.delete(id); // fails if entries still reference it
 Images are resized (max 1920x1920 by default, org-configurable), converted to WebP, and served off a CDN — asynchronously, right after upload. `confirmUpload` returns immediately with `status: "pending"`; poll `media.get` until it flips to `"ready"` (or `"failed"`).
 
 ```ts
-const { url, fields, s3Key } = await draftbase.media.getUploadUrl({ fileName, contentType });
+const { url, fields, s3Key } = await draftbase.media.getUploadUrl({
+  fileName,
+  contentType,
+});
 
 const form = new FormData();
 for (const [key, value] of Object.entries(fields)) form.append(key, value);
 form.append("file", file); // must be the last field
 await fetch(url, { method: "POST", body: form }); // S3 presigned POST — enforces the org's size limit
 
-const { id } = await draftbase.media.confirmUpload({ s3Key, contentType, altText });
+const { id } = await draftbase.media.confirmUpload({
+  s3Key,
+  contentType,
+  altText,
+});
 
 const asset = await draftbase.media.get(id); // { status: "pending" | "ready" | "failed", width, height, url, ... }
 ```
@@ -97,7 +104,10 @@ Per-org defaults (max 1920x1920px, 5MB, WebP conversion on) — override, or rea
 
 ```ts
 await draftbase.orgs.getMediaSettings(); // { enabled, maxWidth, maxHeight, maxUploadBytes }
-await draftbase.orgs.updateMediaSettings({ maxWidth: 2560, maxUploadBytes: 10 * 1024 * 1024 });
+await draftbase.orgs.updateMediaSettings({
+  maxWidth: 2560,
+  maxUploadBytes: 10 * 1024 * 1024,
+});
 await draftbase.orgs.updateMediaSettings({ enabled: false }); // skip resize/convert, keep originals as-is
 ```
 
@@ -105,9 +115,16 @@ await draftbase.orgs.updateMediaSettings({ enabled: false }); // skip resize/con
 
 ```ts
 await draftbase.webhooks.list();
-await draftbase.webhooks.create({ url, events: ["entry.published"] }); // -> { id, secret }
+await draftbase.webhooks.create({
+  url,
+  events: ["entry.moved_to_review"],
+  includeContent: true,
+  envId: "production",
+}); // -> { id, secret }
 await draftbase.webhooks.delete(id);
 ```
+
+Webhook requests include a versioned event envelope and HMAC signatures. Use `entry.moved_to_review` with `includeContent: true` to trigger an external Claude skill or Python/JavaScript Review Readiness runner.
 
 ## Typed fields
 
@@ -117,7 +134,9 @@ interface BlogPostFields {
   body: string;
 }
 
-const { entries } = await draftbase.getEntries<BlogPostFields>({ contentTypeId: "blogPost" });
+const { entries } = await draftbase.getEntries<BlogPostFields>({
+  contentTypeId: "blogPost",
+});
 entries[0].fields.title; // string
 ```
 

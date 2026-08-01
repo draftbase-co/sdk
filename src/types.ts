@@ -81,8 +81,10 @@ export interface ContentType {
 	updatedAt: string;
 }
 
-export interface ListContentTypesOptions
-	extends Record<string, string | number | boolean | undefined> {
+export interface ListContentTypesOptions extends Record<
+	string,
+	string | number | boolean | undefined
+> {
 	envId?: Environment;
 }
 
@@ -145,17 +147,33 @@ export interface OrgMediaSettings {
 
 export type UpdateOrgMediaSettingsInput = Partial<OrgMediaSettings>;
 
-export type WebhookEvent = "entry.published" | "entry.unpublished" | "entry.deleted";
+export type WebhookEvent =
+	| "entry.created"
+	| "entry.updated"
+	| "entry.status_changed"
+	| "entry.moved_to_review"
+	| "entry.published"
+	| "entry.unpublished"
+	| "entry.archived"
+	| "entry.deleted"
+	| "entry.rolled_back"
+	| "entry.tags_updated";
 
 export interface Webhook {
 	_id: string;
 	orgId: string;
 	url: string;
 	events: WebhookEvent[];
+	envId?: string;
+	contentTypeId?: string;
+	includeContent?: boolean;
 	createdAt: string;
 }
 
 export interface CreateWebhookInput {
 	url: string;
 	events: WebhookEvent[];
+	envId?: Environment;
+	contentTypeId?: string;
+	includeContent?: boolean;
 }
