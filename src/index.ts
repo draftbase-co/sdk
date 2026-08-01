@@ -47,8 +47,11 @@ export function createClient({
 			request<GetEntriesResult<Fields>>("/delivery/entries", {
 				params: { envId: environment, ...options },
 			}),
-		getEntry: <Fields = Record<string, unknown>>(id: string, envId: Environment = environment) =>
-			request<Entry<Fields> | null>(`/delivery/entries/${id}`, { params: { envId } }),
+		getEntry: <Fields = Record<string, unknown>>(
+			id: string,
+			envId: Environment = environment,
+			include?: number,
+		) => request<Entry<Fields> | null>(`/delivery/entries/${id}`, { params: { envId, include } }),
 
 		/** Raw GraphQL over the same delivery-scoped, published-only data. */
 		graphql: async <T = unknown>(query: string, variables?: Record<string, unknown>) => {
@@ -65,8 +68,11 @@ export function createClient({
 		entries: {
 			list: <Fields = Record<string, unknown>>(options: ListEntriesOptions = {}) =>
 				request<Entry<Fields>[]>("/entries", { params: { envId: environment, ...options } }),
-			get: <Fields = Record<string, unknown>>(id: string, envId: Environment = environment) =>
-				request<Entry<Fields> | null>(`/entries/${id}`, { params: { envId } }),
+			get: <Fields = Record<string, unknown>>(
+				id: string,
+				envId: Environment = environment,
+				include?: number,
+			) => request<Entry<Fields> | null>(`/entries/${id}`, { params: { envId, include } }),
 			create: (input: CreateEntryInput) =>
 				request<{ id: string }>("/entries", {
 					method: "POST",

@@ -24,6 +24,8 @@ export interface GetEntriesOptions extends Record<string, string | number | bool
 	after?: string;
 	limit?: number;
 	envId?: Environment;
+	/** Depth (0-5) to resolve `reference`/`media` fields into nested objects instead of raw ids. */
+	include?: number;
 }
 
 export interface GetEntriesResult<Fields = Record<string, unknown>> {
@@ -36,6 +38,7 @@ export interface ListEntriesOptions extends Record<string, string | number | boo
 	locale?: string;
 	status?: EntryStatus;
 	envId?: Environment;
+	include?: number;
 }
 
 export interface GraphqlResponse<T> {
