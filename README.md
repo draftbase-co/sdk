@@ -16,7 +16,7 @@ import { createClient } from "@draftbase/sdk";
 const draftbase = createClient({ apiKey: process.env.DRAFTBASE_API_KEY! });
 ```
 
-Options: `apiKey` (required), `baseUrl` (default `https://api.draftbase.dev`), `environment` (default `envId` applied to delivery/entries reads, overridable per call), `retries` (read requests only, default `2`), `cacheTtlMs` (cache for read requests, default `0` = disabled), `cache` (`"memory"` default or `"disk"`), `diskCacheDir` (only for `cache: "disk"`, default an OS-temp folder).
+Options: `apiKey` (required), `baseUrl` (default `https://api.draftbase.co`), `environment` (default `envId` applied to delivery/entries reads, overridable per call), `retries` (read requests only, default `2`), `cacheTtlMs` (cache for read requests, default `0` = disabled), `cache` (`"memory"` default or `"disk"`), `diskCacheDir` (only for `cache: "disk"`, default an OS-temp folder).
 
 Use a `delivery`-scoped key for the top-level `getEntries`/`getEntry`/`graphql` methods, and a `management`-scoped key for everything under `entries`, `contentTypes`, `media`, `webhooks`.
 
@@ -24,10 +24,10 @@ Use a `delivery`-scoped key for the top-level `getEntries`/`getEntry`/`graphql` 
 
 ```ts
 const { entries, nextCursor } = await draftbase.getEntries({
-  contentTypeId: "blogPost", // optional
-  locale: "en-US", // optional
-  limit: 25, // optional, max 100, default 25
-  after: nextCursor, // optional, cursor pagination
+	contentTypeId: "blogPost", // optional
+	locale: "en-US", // optional
+	limit: 25, // optional, max 100, default 25
+	after: nextCursor, // optional, cursor pagination
 });
 
 const entry = await draftbase.getEntry("<entry id>"); // null if not found
@@ -47,8 +47,8 @@ Same delivery-scoped, published-only data as `getEntries`/`getEntry`, queryable 
 
 ```ts
 const data = await draftbase.graphql<{ entry: { fields: { title: string } } }>(
-  `query($id: ID!) { entry(id: $id) { fields } }`,
-  { id: "<entry id>" },
+	`query($id: ID!) { entry(id: $id) { fields } }`,
+	{ id: "<entry id>" },
 );
 ```
 
@@ -82,8 +82,8 @@ Images are resized (max 1920x1920 by default, org-configurable), converted to We
 
 ```ts
 const { url, fields, s3Key } = await draftbase.media.getUploadUrl({
-  fileName,
-  contentType,
+	fileName,
+	contentType,
 });
 
 const form = new FormData();
@@ -92,9 +92,9 @@ form.append("file", file); // must be the last field
 await fetch(url, { method: "POST", body: form }); // S3 presigned POST — enforces the org's size limit
 
 const { id } = await draftbase.media.confirmUpload({
-  s3Key,
-  contentType,
-  altText,
+	s3Key,
+	contentType,
+	altText,
 });
 
 const asset = await draftbase.media.get(id); // { status: "pending" | "ready" | "failed", width, height, url, ... }
@@ -105,8 +105,8 @@ Per-org defaults (max 1920x1920px, 5MB, WebP conversion on) — override, or rea
 ```ts
 await draftbase.orgs.getMediaSettings(); // { enabled, maxWidth, maxHeight, maxUploadBytes }
 await draftbase.orgs.updateMediaSettings({
-  maxWidth: 2560,
-  maxUploadBytes: 10 * 1024 * 1024,
+	maxWidth: 2560,
+	maxUploadBytes: 10 * 1024 * 1024,
 });
 await draftbase.orgs.updateMediaSettings({ enabled: false }); // skip resize/convert, keep originals as-is
 ```
@@ -116,10 +116,10 @@ await draftbase.orgs.updateMediaSettings({ enabled: false }); // skip resize/con
 ```ts
 await draftbase.webhooks.list();
 await draftbase.webhooks.create({
-  url,
-  events: ["entry.moved_to_review"],
-  includeContent: true,
-  envId: "production",
+	url,
+	events: ["entry.moved_to_review"],
+	includeContent: true,
+	envId: "production",
 }); // -> { id, secret }
 await draftbase.webhooks.delete(id);
 ```
@@ -130,12 +130,12 @@ Webhook requests include a versioned event envelope and HMAC signatures. Use `en
 
 ```ts
 interface BlogPostFields {
-  title: string;
-  body: string;
+	title: string;
+	body: string;
 }
 
 const { entries } = await draftbase.getEntries<BlogPostFields>({
-  contentTypeId: "blogPost",
+	contentTypeId: "blogPost",
 });
 entries[0].fields.title; // string
 ```
@@ -148,9 +148,9 @@ Non-2xx responses (other than a 404, which resolves to `null`) throw `DraftbaseE
 import { DraftbaseError } from "@draftbase/sdk";
 
 try {
-  await draftbase.getEntries();
+	await draftbase.getEntries();
 } catch (err) {
-  if (err instanceof DraftbaseError) console.error(err.status, err.message);
+	if (err instanceof DraftbaseError) console.error(err.status, err.message);
 }
 ```
 

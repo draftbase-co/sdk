@@ -35,7 +35,7 @@ export interface ClientOptions extends Omit<RequesterOptions, "baseUrl"> {
 }
 
 export function createClient({
-	baseUrl = "https://api.draftbase.dev",
+	baseUrl = "https://api.draftbase.co",
 	environment = DEFAULT_ENVIRONMENT,
 	...rest
 }: ClientOptions) {
@@ -51,7 +51,10 @@ export function createClient({
 			id: string,
 			envId: Environment = environment,
 			include?: number,
-		) => request<Entry<Fields> | null>(`/delivery/entries/${id}`, { params: { envId, include } }),
+		) =>
+			request<Entry<Fields> | null>(`/delivery/entries/${id}`, {
+				params: { envId, include },
+			}),
 
 		/** Raw GraphQL over the same delivery-scoped, published-only data. */
 		graphql: async <T = unknown>(query: string, variables?: Record<string, unknown>) => {
@@ -67,7 +70,9 @@ export function createClient({
 		/** Read/write entries in any status. Use a `management`-scoped API key. */
 		entries: {
 			list: <Fields = Record<string, unknown>>(options: ListEntriesOptions = {}) =>
-				request<Entry<Fields>[]>("/entries", { params: { envId: environment, ...options } }),
+				request<Entry<Fields>[]>("/entries", {
+					params: { envId: environment, ...options },
+				}),
 			get: <Fields = Record<string, unknown>>(
 				id: string,
 				envId: Environment = environment,
@@ -78,10 +83,15 @@ export function createClient({
 					method: "POST",
 					body: { envId: environment, ...input },
 				}),
-			update: <Fields = Record<string, unknown>>(id: string, fields: Record<string, unknown>) =>
-				request<Entry<Fields>>(`/entries/${id}`, { method: "PATCH", body: { fields } }),
+			update: <Fields = Record<string, unknown>>(
+				id: string,
+				fields: Record<string, unknown>,
+			) => request<Entry<Fields>>(`/entries/${id}`, { method: "PATCH", body: { fields } }),
 			updateStatus: <Fields = Record<string, unknown>>(id: string, status: EntryStatus) =>
-				request<Entry<Fields>>(`/entries/${id}/status`, { method: "PATCH", body: { status } }),
+				request<Entry<Fields>>(`/entries/${id}/status`, {
+					method: "PATCH",
+					body: { status },
+				}),
 			rollback: <Fields = Record<string, unknown>>(id: string, version: number) =>
 				request<Entry<Fields>>(`/entries/${id}/rollback/${version}`, { method: "POST" }),
 			delete: (id: string) => request<{ ok: true }>(`/entries/${id}`, { method: "DELETE" }),
@@ -89,7 +99,9 @@ export function createClient({
 
 		contentTypes: {
 			list: (options: ListContentTypesOptions = {}) =>
-				request<ContentType[]>("/content-types", { params: { envId: environment, ...options } }),
+				request<ContentType[]>("/content-types", {
+					params: { envId: environment, ...options },
+				}),
 			get: (id: string) => request<ContentType | null>(`/content-types/${id}`),
 			create: (input: CreateContentTypeInput) =>
 				request<{ id: string }>("/content-types", {
@@ -98,7 +110,8 @@ export function createClient({
 				}),
 			update: (id: string, input: UpdateContentTypeInput) =>
 				request<ContentType>(`/content-types/${id}`, { method: "PATCH", body: input }),
-			delete: (id: string) => request<{ ok: true }>(`/content-types/${id}`, { method: "DELETE" }),
+			delete: (id: string) =>
+				request<{ ok: true }>(`/content-types/${id}`, { method: "DELETE" }),
 		},
 
 		media: {
@@ -124,7 +137,10 @@ export function createClient({
 		webhooks: {
 			list: () => request<Omit<Webhook, "secret">[]>("/webhooks"),
 			create: (input: CreateWebhookInput) =>
-				request<{ id: string; secret: string }>("/webhooks", { method: "POST", body: input }),
+				request<{ id: string; secret: string }>("/webhooks", {
+					method: "POST",
+					body: input,
+				}),
 			delete: (id: string) => request<{ ok: true }>(`/webhooks/${id}`, { method: "DELETE" }),
 		},
 	};
