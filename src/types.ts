@@ -1,4 +1,4 @@
-export type EntryStatus = "draft" | "review" | "published" | "archived";
+export type EntryStatus = "draft" | "published" | "updated" | "archived";
 
 export const DEFAULT_ENVIRONMENT = "production";
 export const SUGGESTED_ENVIRONMENTS = ["production", "staging", "dev"] as const;
@@ -151,7 +151,6 @@ export type WebhookEvent =
 	| "entry.created"
 	| "entry.updated"
 	| "entry.status_changed"
-	| "entry.moved_to_review"
 	| "entry.published"
 	| "entry.unpublished"
 	| "entry.archived"
