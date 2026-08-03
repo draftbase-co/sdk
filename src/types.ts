@@ -54,14 +54,7 @@ export interface CreateEntryInput {
 }
 
 export type ContentTypeFieldType =
-	| "text"
-	| "richText"
-	| "number"
-	| "boolean"
-	| "date"
-	| "media"
-	| "reference"
-	| "json";
+	"text" | "richText" | "number" | "boolean" | "date" | "media" | "reference" | "json";
 
 export interface ContentTypeField {
 	key: string;
