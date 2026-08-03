@@ -1,25 +1,47 @@
 {
-  "name": "@draftbase/sdk",
-  "version": "0.0.0",
-  "description": "Node.js / Next.js client for fetching content from Draftbase",
-  "type": "module",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
-  "exports": {
-    ".": "./dist/index.js"
-  },
-  "bin": {
-    "draftbase-sync": "./dist/cli.js"
-  },
-  "files": ["dist"],
-  "scripts": {
-    "build": "tsc -p tsconfig.json && chmod +x dist/cli.js",
-    "lint": "tsc --noEmit",
-    "test": "node --test dist/*.test.js"
-  },
-  "devDependencies": {
-    "@draftbase/tsconfig": "workspace:*",
-    "@types/node": "^22.9.0",
-    "typescript": "^5.6.0"
-  }
+	"name": "@draftbase/sdk",
+	"version": "0.1.0",
+	"description": "Node.js / Next.js client for fetching content from Draftbase",
+	"keywords": [
+		"draftbase",
+		"cms",
+		"headless-cms",
+		"mdx",
+		"sdk"
+	],
+	"license": "MIT",
+	"author": "Draftbase",
+	"homepage": "https://draftbase.co",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/SamerAlsayegh/draftbase-monorepo.git",
+		"directory": "packages/sdk"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"type": "module",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": "./dist/index.js"
+	},
+	"bin": {
+		"draftbase-sync": "./dist/cli.js"
+	},
+	"files": [
+		"dist",
+		"LICENSE",
+		"README.md"
+	],
+	"scripts": {
+		"build": "tsc -p tsconfig.json && chmod +x dist/cli.js",
+		"lint": "tsc --noEmit",
+		"test": "node --test dist/*.test.js"
+	},
+	"devDependencies": {
+		"@draftbase/tsconfig": "workspace:*",
+		"@types/node": "^22.9.0",
+		"typescript": "^5.6.0"
+	}
 }
