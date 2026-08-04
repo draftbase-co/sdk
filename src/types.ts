@@ -16,6 +16,7 @@ export interface Entry<Fields = Record<string, unknown>> {
 	version: number;
 	createdAt: string;
 	updatedAt: string;
+	publishedAt?: string;
 }
 
 export interface GetEntriesOptions extends Record<string, string | number | boolean | undefined> {
