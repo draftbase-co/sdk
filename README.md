@@ -1,11 +1,13 @@
 # @draftbase/sdk
 
-Node.js / Next.js client for Draftbase. Zero dependencies, uses global `fetch`.
+Official Node.js client for [Draftbase](https://draftbase.co), the MDX-based headless CMS for React developers. Zero runtime dependencies, uses global `fetch`, fully typed — use it to fetch published content, manage entries/content types/media, and sync your CMS schema into TypeScript types, from any Node.js backend or framework (Next.js, Astro, Remix, SvelteKit, Nuxt, Express, Cloudflare Workers).
 
 ## Install
 
 ```bash
 pnpm add @draftbase/sdk
+# or: npm install @draftbase/sdk
+# or: yarn add @draftbase/sdk
 ```
 
 ## Setup
@@ -19,6 +21,101 @@ const draftbase = createClient({ apiKey: process.env.DRAFTBASE_API_KEY! });
 Options: `apiKey` (required), `baseUrl` (default `https://api.draftbase.co`), `environment` (default `envId` applied to delivery/entries reads, overridable per call), `retries` (read requests only, default `2`), `cacheTtlMs` (cache for read requests, default `0` = disabled), `cache` (`"memory"` default or `"disk"`), `diskCacheDir` (only for `cache: "disk"`, default an OS-temp folder).
 
 Use a `delivery`-scoped key for the top-level `getEntries`/`getEntry`/`graphql` methods, and a `management`-scoped key for everything under `entries`, `contentTypes`, `media`, `webhooks`.
+
+## Framework quickstarts
+
+The client itself is framework-agnostic (plain Node.js, global `fetch`) — only the _calling convention_ changes per framework. Instantiate `createClient` once in a shared module and import it wherever you need content.
+
+### Next.js (App Router)
+
+```ts
+// lib/draftbase.ts
+import { createClient } from "@draftbase/sdk";
+export const draftbase = createClient({ apiKey: process.env.DRAFTBASE_API_KEY! });
+```
+
+```tsx
+// app/blog/[slug]/page.tsx
+import { draftbase } from "@/lib/draftbase";
+
+export default async function Page({ params }: { params: Promise<{ slug: string }> }) {
+	const { slug } = await params;
+	const entry = await draftbase.getEntry(slug);
+	if (!entry) return notFound();
+	return <article>{entry.fields.title}</article>;
+}
+```
+
+Also works in Route Handlers (`app/api/**/route.ts`) and Server Actions — anywhere Node.js `fetch` runs server-side.
+
+### Astro
+
+```astro
+---
+// src/pages/blog/[slug].astro
+import { draftbase } from "../../lib/draftbase";
+const entry = await draftbase.getEntry(Astro.params.slug);
+---
+<h1>{entry.fields.title}</h1>
+```
+
+### Remix / React Router (framework mode)
+
+```ts
+// app/routes/blog.$slug.tsx
+import { draftbase } from "~/lib/draftbase";
+import { data } from "react-router";
+
+export async function loader({ params }: Route.LoaderArgs) {
+	const entry = await draftbase.getEntry(params.slug!);
+	if (!entry) throw data(null, { status: 404 });
+	return { entry };
+}
+```
+
+### SvelteKit
+
+```ts
+// src/routes/blog/[slug]/+page.server.ts
+import { draftbase } from "$lib/draftbase";
+import { error } from "@sveltejs/kit";
+
+export async function load({ params }) {
+	const entry = await draftbase.getEntry(params.slug);
+	if (!entry) error(404);
+	return { entry };
+}
+```
+
+### Nuxt
+
+```ts
+// server/api/blog/[slug].ts
+import { draftbase } from "~/server/utils/draftbase";
+
+export default defineEventHandler(async (event) => {
+	const slug = getRouterParam(event, "slug");
+	const entry = await draftbase.getEntry(slug!);
+	if (!entry) throw createError({ statusCode: 404 });
+	return entry;
+});
+```
+
+### Node.js / Express (or any custom backend)
+
+```ts
+import express from "express";
+import { draftbase } from "./lib/draftbase.js";
+
+const app = express();
+app.get("/blog/:slug", async (req, res) => {
+	const entry = await draftbase.getEntry(req.params.slug);
+	if (!entry) return res.sendStatus(404);
+	res.json(entry);
+});
+```
+
+All of the above use `getEntry`/`getEntries` (delivery-scoped, published-only reads) — swap in `entries.*`/`contentTypes.*`/`media.*` (management-scoped) the same way for authoring/admin UIs.
 
 ## Delivery — published content
 
@@ -171,3 +268,32 @@ npx draftbase-sync --api-key <management-key> --out src/types/draftbase.d.ts
 ```
 
 Re-run whenever content types change (e.g. a `predev`/CI step) to keep `Entry<BlogPostFields>` etc. in sync with the CMS schema.
+
+## Using with Claude Code / AI coding agents
+
+If you're an agent implementing Draftbase in a project, follow this checklist:
+
+1. **Install**: `pnpm add @draftbase/sdk` (or `npm`/`yarn` equivalent — detect the project's package manager first).
+2. **Never hardcode API keys.** Read `apiKey` from an environment variable (`DRAFTBASE_API_KEY` or similar) — add it to `.env.example` if the project has one, and confirm it's in `.gitignore`, don't commit it.
+3. **Pick the right key scope**: `delivery` key for read-only published content (`getEntries`/`getEntry`/`graphql`); `management` key for anything under `entries`/`contentTypes`/`media`/`webhooks`. Ask the user which they have if unclear — a `delivery` key cannot call management methods and will 401/403.
+4. **All methods are async** and return typed data directly (no `.data` wrapper) — `entries.list()` etc. — except `getEntry`/`entries.get`, which resolve to `null` on a 404 instead of throwing. Handle that `null` case explicitly.
+5. **Don't wrap calls in retry loops** — reads already retry internally (see [Retries & caching](#retries--caching)); adding your own doubles the backoff.
+6. **Generate types before writing content-shape code**: run `npx draftbase-sync --api-key <management-key> --out <path>` first, then import the generated interfaces as the `Entry<T>` type param — don't hand-write field interfaces that can drift from the live schema.
+7. **This package has zero runtime dependencies** and works in any Node/Next.js context (route handlers, server components, scripts) — it is not usable in a browser bundle (no `apiKey` should ever ship client-side).
+
+## FAQ
+
+**What is Draftbase?**
+Draftbase is a lightweight, MDX-based headless CMS built for React and Next.js developers. Content is authored as MDX/markdown with typed fields, then delivered via REST, GraphQL, or this SDK, and rendered with [`@draftbase/renderer`](https://www.npmjs.com/package/@draftbase/renderer) into React, Vue, or static HTML.
+
+**How is `@draftbase/sdk` different from calling the REST API directly?**
+It adds typed responses, automatic retries with backoff on transient read failures, optional response caching, cursor pagination handling, and a `draftbase-sync` CLI that generates TypeScript interfaces from your live content types — all of that would otherwise be hand-rolled `fetch` boilerplate.
+
+**Does this work with the Next.js App Router / React Server Components?**
+Yes — every method returns a plain `Promise`, so `await draftbase.getEntry(id)` works directly inside an `async` Server Component or Route Handler with no extra data-fetching library.
+
+**Can I use this SDK in the browser?**
+No — it's a server-side client. API keys are secrets and must never ship to a browser bundle; call this SDK from a server component, route handler, loader, or backend, and expose only the data you need to the client.
+
+**How do I keep TypeScript types in sync with my CMS schema?**
+Run `npx draftbase-sync --api-key <management-key> --out <path>` (see [Content type sync](#content-type-sync-codegen)) whenever content types change; it regenerates one `interface` per content type from the live schema.
