@@ -17,6 +17,7 @@ export interface Entry<Fields = Record<string, unknown>> {
 	createdAt: string;
 	updatedAt: string;
 	publishedAt?: string;
+	scheduledPublishAt?: string;
 }
 
 export interface GetEntriesOptions extends Record<string, string | number | boolean | undefined> {

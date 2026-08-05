@@ -95,6 +95,14 @@ export function createClient({
 			rollback: <Fields = Record<string, unknown>>(id: string, version: number) =>
 				request<Entry<Fields>>(`/entries/${id}/rollback/${version}`, { method: "POST" }),
 			delete: (id: string) => request<{ ok: true }>(`/entries/${id}`, { method: "DELETE" }),
+			/** Schedules a draft/updated entry to publish at `publishAt` (ISO 8601). Replaces any existing schedule. */
+			schedulePublish: <Fields = Record<string, unknown>>(id: string, publishAt: string) =>
+				request<Entry<Fields>>(`/entries/${id}/schedule`, {
+					method: "POST",
+					body: { publishAt },
+				}),
+			cancelSchedule: <Fields = Record<string, unknown>>(id: string) =>
+				request<Entry<Fields>>(`/entries/${id}/schedule`, { method: "DELETE" }),
 		},
 
 		contentTypes: {
