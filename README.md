@@ -161,6 +161,9 @@ await draftbase.entries.update(id, fields); // replaces fields, bumps version, s
 await draftbase.entries.updateStatus(id, "published"); // draft | review | published | archived
 await draftbase.entries.rollback(id, version); // restore fields from a past revision
 await draftbase.entries.delete(id);
+
+await draftbase.entries.schedulePublish(id, "2026-01-01T09:00:00Z"); // ISO 8601, replaces any existing schedule
+await draftbase.entries.cancelSchedule(id);
 ```
 
 ## Content types (management)
