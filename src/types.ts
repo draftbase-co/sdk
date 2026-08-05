@@ -27,6 +27,10 @@ export interface GetEntriesOptions extends Record<string, string | number | bool
 	envId?: Environment;
 	/** Depth (0-5) to resolve `reference`/`media` fields into nested objects instead of raw ids. */
 	include?: number;
+	/** Relevance-ranked keyword search across text/richText fields. */
+	search?: string;
+	/** "semantic" embeds `search` and matches by meaning instead of keywords. No cursor pagination in this mode — `after` is ignored. */
+	mode?: "text" | "semantic";
 }
 
 export interface GetEntriesResult<Fields = Record<string, unknown>> {
@@ -40,6 +44,8 @@ export interface ListEntriesOptions extends Record<string, string | number | boo
 	status?: EntryStatus;
 	envId?: Environment;
 	include?: number;
+	search?: string;
+	mode?: "text" | "semantic";
 }
 
 export interface GraphqlResponse<T> {
