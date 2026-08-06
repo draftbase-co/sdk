@@ -130,6 +130,8 @@ const { entries, nextCursor } = await draftbase.getEntries({
 const entry = await draftbase.getEntry("<entry id>"); // null if not found
 ```
 
+`getEntries`/`getEntry` responses are CDN-cached at the edge (per API key, keyed on the full query) — a cache hit is served without reaching the origin, so it doesn't count against your org's rate limit. Cache misses do.
+
 Pin a client to one environment (matches each entry's `envId`, e.g. `"staging"` vs `"production"`):
 
 ```ts
