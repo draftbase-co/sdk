@@ -1,5 +1,8 @@
 # @draftbase/sdk
 
+[![npm](https://img.shields.io/npm/v/@draftbase/sdk)](https://www.npmjs.com/package/@draftbase/sdk)
+[![GitHub](https://img.shields.io/badge/GitHub-draftbase--monorepo-181717?logo=github)](https://github.com/draftbase-co/draftbase-monorepo/tree/main/packages/sdk)
+
 Official Node.js client for [Draftbase](https://draftbase.co), the MDX-based headless CMS for React developers. Zero runtime dependencies, uses global `fetch`, fully typed — use it to fetch published content, manage entries/content types/media, and sync your CMS schema into TypeScript types, from any Node.js backend or framework (Next.js, Astro, Remix, SvelteKit, Nuxt, Express, Cloudflare Workers).
 
 ## Install
@@ -302,3 +305,16 @@ No — it's a server-side client. API keys are secrets and must never ship to a 
 
 **How do I keep TypeScript types in sync with my CMS schema?**
 Run `npx draftbase-sync --api-key <management-key> --out <path>` (see [Content type sync](#content-type-sync-codegen)) whenever content types change; it regenerates one `interface` per content type from the live schema.
+
+## Links
+
+- [npm](https://www.npmjs.com/package/@draftbase/sdk)
+- [Source (`packages/sdk`)](https://github.com/draftbase-co/draftbase-monorepo/tree/main/packages/sdk)
+- [Issues](https://github.com/draftbase-co/draftbase-monorepo/issues)
+- [`@draftbase/renderer`](https://www.npmjs.com/package/@draftbase/renderer) — renders the MDX this SDK fetches
+- [draftbase.co](https://draftbase.co) — product site
+- [API reference](https://draftbase.co/docs/api-reference) — full REST API this SDK wraps
+- [MCP server docs](https://draftbase.co/docs/mcp)
+- [Framework support](https://draftbase.co/frameworks)
+- [Docs](https://draftbase.co/docs)
+- [Pricing](https://draftbase.co/pricing)
