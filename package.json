@@ -14,8 +14,7 @@
 	"homepage": "https://draftbase.co",
 	"repository": {
 		"type": "git",
-		"url": "git+https://github.com/draftbase-co/draftbase-monorepo.git",
-		"directory": "packages/sdk"
+		"url": "git+https://github.com/draftbase-co/sdk.git"
 	},
 	"publishConfig": {
 		"access": "public"
@@ -27,7 +26,7 @@
 		".": "./dist/index.js"
 	},
 	"bin": {
-		"draftbase-sync": "./dist/cli.js"
+		"draftbase-sync": "dist/cli.js"
 	},
 	"files": [
 		"dist",
