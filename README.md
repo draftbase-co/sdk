@@ -226,7 +226,7 @@ await draftbase.webhooks.create({
 await draftbase.webhooks.delete(id);
 ```
 
-Webhook requests include a versioned event envelope and HMAC signatures. Use `entry.moved_to_review` with `includeContent: true` to trigger an external Claude skill or Python/JavaScript Review Readiness runner.
+Webhook requests include a versioned event envelope and HMAC signatures. Use `entry.moved_to_review` with `includeContent: true` to trigger an external Claude skill or Python/JavaScript Review Readiness runner as an example.
 
 ## Typed fields
 
