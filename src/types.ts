@@ -6,6 +6,14 @@ export const SUGGESTED_ENVIRONMENTS = ["production", "staging", "dev"] as const;
 /** Free-form — "production" | "staging" | "dev" are suggestions, any string is allowed. */
 export type Environment = "production" | "staging" | "dev" | (string & {});
 
+/** Resolved target of an `<EntryLink id="...">` found inside a `richText` field. */
+export interface EntryLinkView {
+	id: string;
+	templateId: string;
+	title: string;
+	status: EntryStatus;
+}
+
 export interface Entry<Fields = Record<string, unknown>> {
 	_id: string;
 	envId: string;
@@ -18,6 +26,9 @@ export interface Entry<Fields = Record<string, unknown>> {
 	updatedAt: string;
 	publishedAt?: string;
 	scheduledPublishAt?: string;
+	/** Present when fetched with `include` set — every `EntryLink` id found in this entry's
+	 * rich text fields, resolved to its target entry's type/title/status. */
+	entryLinks?: Record<string, EntryLinkView>;
 }
 
 export interface GetEntriesOptions extends Record<string, string | number | boolean | undefined> {
