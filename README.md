@@ -309,8 +309,8 @@ Run `npx draftbase-sync --api-key <management-key> --out <path>` (see [Content t
 ## Links
 
 - [npm](https://www.npmjs.com/package/@draftbase/sdk)
-- [Source (`packages/sdk`)](https://github.com/draftbase-co/draftbase-monorepo/tree/main/packages/sdk)
-- [Issues](https://github.com/draftbase-co/draftbase-monorepo/issues)
+- [Source](https://github.com/draftbase-co/sdk)
+- [Issues](https://github.com/draftbase-co/sdk/issues)
 - [`@draftbase/renderer`](https://www.npmjs.com/package/@draftbase/renderer) — renders the MDX this SDK fetches
 - [draftbase.co](https://draftbase.co) — product site
 - [API reference](https://draftbase.co/docs/api-reference) — full REST API this SDK wraps
