@@ -1,6 +1,6 @@
 {
 	"name": "@draftbase/sdk",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "Node.js / Next.js client for fetching content from Draftbase",
 	"keywords": [
 		"draftbase",
