@@ -15,7 +15,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          registry-url: https://registry.npmjs.org
+          # No registry-url: it writes an .npmrc with setup-node's placeholder
+          # NODE_AUTH_TOKEN, which makes npm skip the OIDC trusted-publishing
+          # exchange and 404 on publish.
 
       - run: npm install -g npm@latest
 
