@@ -4,6 +4,8 @@ export class DraftbaseError extends Error {
 	constructor(
 		public status: number,
 		message: string,
+		/** Stable machine-readable code from the API, e.g. "NOT_FOUND". Absent on network errors. */
+		public code?: string,
 	) {
 		super(message);
 		this.name = "DraftbaseError";
@@ -60,7 +62,8 @@ export function createRequester({
 	cache = "memory",
 	diskCacheDir,
 }: RequesterOptions) {
-	const store: CacheStore = cache === "disk" ? createDiskCache(diskCacheDir) : createMemoryCache();
+	const store: CacheStore =
+		cache === "disk" ? createDiskCache(diskCacheDir) : createMemoryCache();
 
 	return async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
 		const method = options.method ?? "GET";
@@ -83,7 +86,9 @@ export function createRequester({
 					method,
 					headers: {
 						Authorization: `Bearer ${apiKey}`,
-						...(options.body !== undefined ? { "Content-Type": "application/json" } : {}),
+						...(options.body !== undefined
+							? { "Content-Type": "application/json" }
+							: {}),
 					},
 					body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
 				});
@@ -95,14 +100,24 @@ export function createRequester({
 						await wait(2 ** attempt * 300);
 						continue;
 					}
+					const body = await res.text();
+					let code: string | undefined;
+					try {
+						const parsed = JSON.parse(body) as { code?: unknown };
+						if (typeof parsed.code === "string") code = parsed.code;
+					} catch {
+						// Non-JSON error body (gateway HTML, empty) — status alone has to carry it.
+					}
 					throw new DraftbaseError(
 						res.status,
-						`Draftbase API error ${res.status}: ${await res.text()}`,
+						`Draftbase API error ${res.status}: ${body}`,
+						code,
 					);
 				}
 
 				const value = (res.status === 204 ? undefined : await res.json()) as T;
-				if (cacheable) await store.set(cacheKey, { expires: Date.now() + cacheTtlMs, value });
+				if (cacheable)
+					await store.set(cacheKey, { expires: Date.now() + cacheTtlMs, value });
 				return value;
 			} catch (error) {
 				lastError = error;
