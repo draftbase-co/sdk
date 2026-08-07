@@ -186,7 +186,7 @@ await draftbase.contentTypes.delete(id); // fails if entries still reference it
 Images are resized (max 1920x1920 by default, org-configurable), converted to WebP, and served off a CDN — asynchronously, right after upload. `confirmUpload` returns immediately with `status: "pending"`; poll `media.get` until it flips to `"ready"` (or `"failed"`).
 
 ```ts
-const { url, fields, s3Key } = await draftbase.media.getUploadUrl({
+const { url, fields, storageKey } = await draftbase.media.getUploadUrl({
 	fileName,
 	contentType,
 });
@@ -194,10 +194,10 @@ const { url, fields, s3Key } = await draftbase.media.getUploadUrl({
 const form = new FormData();
 for (const [key, value] of Object.entries(fields)) form.append(key, value);
 form.append("file", file); // must be the last field
-await fetch(url, { method: "POST", body: form }); // S3 presigned POST — enforces the org's size limit
+await fetch(url, { method: "POST", body: form }); // presigned POST — enforces the org's size limit
 
 const { id } = await draftbase.media.confirmUpload({
-	s3Key,
+	storageKey,
 	contentType,
 	altText,
 });

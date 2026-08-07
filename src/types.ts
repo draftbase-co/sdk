@@ -117,7 +117,7 @@ export interface Asset {
 	_id: string;
 	orgId: string;
 	envId: string;
-	s3Key: string;
+	storageKey: string;
 	contentType: string;
 	status: AssetStatus;
 	width?: number;
@@ -140,11 +140,11 @@ export interface UploadUrlInput {
 export interface UploadUrlResult {
 	url: string;
 	fields: Record<string, string>;
-	s3Key: string;
+	storageKey: string;
 }
 
 export interface ConfirmUploadInput {
-	s3Key: string;
+	storageKey: string;
 	contentType: string;
 	envId?: Environment;
 	altText?: string;
