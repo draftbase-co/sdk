@@ -1,4 +1,5 @@
 import { loadCheckpoint, saveCheckpoint, type MigrationCheckpoint } from "./checkpoint.js";
+import { DraftbaseError } from "../request.js";
 import {
 	REF_TOKEN_PATTERN,
 	type MigrationClient,
@@ -162,12 +163,31 @@ export async function migrate(
 			if (checkpoint.contentTypeIds[contentType.key]) continue;
 			try {
 				if (!dryRun) {
-					const created = await client.contentTypes.create({
-						name: contentType.name,
-						fields: contentType.fields,
-						envId,
-					});
-					checkpoint.contentTypeIds[contentType.key] = created.id;
+					let id: string;
+					try {
+						id = (
+							await client.contentTypes.create({
+								name: contentType.name,
+								fields: contentType.fields,
+								envId,
+							})
+						).id;
+					} catch (createError) {
+						// A prior run may have created it server-side before crashing client-side
+						// (id never made it into the checkpoint) — reuse it instead of failing. The
+						// conflicting id is deterministic (derived from `name`) and the server echoes
+						// it back in the error text, so pull it from there rather than guess.
+						const conflictId =
+							createError instanceof DraftbaseError &&
+							createError.code === "ALREADY_EXISTS"
+								? /Template id "([^"]+)" already exists/.exec(
+										createError.message,
+									)?.[1]
+								: undefined;
+						if (!conflictId) throw createError;
+						id = conflictId;
+					}
+					checkpoint.contentTypeIds[contentType.key] = id;
 				}
 				checkpoint.report.contentTypes.created++;
 				onProgress?.(`content type "${contentType.name}" migrated`);
@@ -220,14 +240,18 @@ export async function migrate(
 				) as Record<string, unknown>;
 				if (!dryRun) {
 					const created = await client.entries.create({
-						contentTypeId,
+						templateId: contentTypeId,
 						locale: entry.locale,
 						fields,
 						envId,
 					});
 					checkpoint.entryIds[entry.key] = created.id;
 					if (entry.status && entry.status !== "draft") {
-						await client.entries.updateStatus(created.id, entry.status);
+						await client.entries.updateStatus(
+							created.id,
+							entry.status,
+							entry.publishedAt,
+						);
 					}
 				}
 				checkpoint.report.entries.created++;
@@ -261,15 +285,18 @@ export async function migrate(
 				checkpoint.entryIds,
 				unresolved,
 			) as Record<string, unknown>;
+			if (!dryRun) await client.entries.update(newId, fields);
 			if (unresolved.length > 0) {
 				checkpoint.report.errors.push({
 					stage: "links",
 					key: entry.key,
 					message: `unresolved reference(s): ${unresolved.join(", ")}`,
 				});
+				// Leave off linkedEntryKeys — the target(s) may exist on a later resume, and this
+				// entry needs another pass through resolveLinks once they do.
+			} else {
+				linkedEntryKeys.add(entry.key);
 			}
-			if (!dryRun) await client.entries.update(newId, fields);
-			linkedEntryKeys.add(entry.key);
 			onProgress?.(`entry ${entry.key} links resolved`);
 		} catch (error) {
 			const message = error instanceof Error ? error.message : String(error);

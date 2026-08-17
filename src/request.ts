@@ -106,15 +106,29 @@ export function createRequester({
 					}
 					const body = await res.text();
 					let code: string | undefined;
+					let apiMessage: string | undefined;
 					try {
-						const parsed = JSON.parse(body) as { code?: unknown };
+						const parsed = JSON.parse(body) as {
+							code?: unknown;
+							error?: unknown;
+							message?: unknown;
+						};
 						if (typeof parsed.code === "string") code = parsed.code;
+						// `error` is prose on most failures; the uncaught-error path instead puts the
+						// error's class name there (e.g. "Error", "BSONError" — no spaces) and the real
+						// detail in `message` — prefer whichever one reads like a sentence.
+						const error = typeof parsed.error === "string" ? parsed.error : undefined;
+						const message =
+							typeof parsed.message === "string" ? parsed.message : undefined;
+						apiMessage = error && error.includes(" ") ? error : (message ?? error);
 					} catch {
-						// Non-JSON error body (gateway HTML, empty) — status alone has to carry it.
+						// Non-JSON error body (gateway HTML, empty) — status/body-text alone has to carry it.
 					}
 					throw new DraftbaseError(
 						res.status,
-						`Draftbase API error ${res.status}: ${body}`,
+						`Draftbase API error: ${method} ${url.pathname} -> ${res.status}` +
+							(code ? ` (${code})` : "") +
+							`: ${apiMessage ?? body}`,
 						code,
 					);
 				}

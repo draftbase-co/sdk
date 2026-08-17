@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { contentfulRichTextToMdx } from "./contentful.js";
+import { contentfulRichTextToMdx, entryStatus } from "./contentful.js";
 
 const ctx = {
 	refKey: (entryId: string) => entryId,
@@ -97,4 +97,14 @@ test("contentfulRichTextToMdx escapes characters that would break MDX parsing", 
 	};
 
 	assert.equal(contentfulRichTextToMdx(document, ctx), "a &lt;b&gt; &#123;c&#125;");
+});
+
+test("entryStatus maps Contentful sys fields to a Draftbase status", () => {
+	assert.equal(entryStatus({ version: 1 }), "draft");
+	assert.equal(entryStatus({ version: 2, publishedVersion: 1 }), "published");
+	assert.equal(entryStatus({ version: 3, publishedVersion: 1 }), "updated");
+	assert.equal(
+		entryStatus({ version: 2, publishedVersion: 1, archivedAt: "2024-01-01T00:00:00Z" }),
+		"archived",
+	);
 });

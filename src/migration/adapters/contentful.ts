@@ -1,5 +1,5 @@
 import { readFile } from "node:fs/promises";
-import type { ContentTypeField, ContentTypeFieldType } from "../../types.js";
+import type { ContentTypeField, ContentTypeFieldType, EntryStatus } from "../../types.js";
 import { refToken } from "../types.js";
 import type {
 	MigrationAsset,
@@ -32,7 +32,14 @@ interface ContentfulLink {
 }
 
 interface ContentfulEntry {
-	sys: { id: string; contentType: { sys: { id: string } } };
+	sys: {
+		id: string;
+		contentType: { sys: { id: string } };
+		version: number;
+		publishedVersion?: number;
+		publishedAt?: string;
+		archivedAt?: string;
+	};
 	fields: Record<string, Record<string, unknown>>;
 }
 
@@ -72,6 +79,18 @@ function mapFieldType(field: ContentfulField): ContentTypeFieldType {
 function isLink(value: unknown, linkType: "Entry" | "Asset"): value is ContentfulLink {
 	const link = value as ContentfulLink | undefined;
 	return link?.sys?.type === "Link" && link.sys.linkType === linkType;
+}
+
+export function entryStatus(sys: {
+	version: number;
+	publishedVersion?: number;
+	archivedAt?: string;
+}): EntryStatus {
+	if (sys.archivedAt) return "archived";
+	if (sys.publishedVersion === undefined) return "draft";
+	// A version more than one past the last publish means edits happened since — Contentful has
+	// no separate "updated" state, it's implied by this gap.
+	return sys.version > sys.publishedVersion + 1 ? "updated" : "published";
 }
 
 function isPlainObject(value: unknown): value is Record<string, unknown> {
@@ -364,6 +383,8 @@ export async function fromContentfulExport(filePath: string): Promise<MigrationS
 						contentTypeKey: entry.sys.contentType.sys.id,
 						locale,
 						fields,
+						status: entryStatus(entry.sys),
+						publishedAt: entry.sys.publishedAt,
 					};
 				}
 			}

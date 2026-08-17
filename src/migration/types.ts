@@ -46,6 +46,9 @@ export interface MigrationEntry {
 	fields: Record<string, MigrationFieldValue>;
 	/** Applied after creation, via a status update. Default is whatever `entries.create` defaults to (draft). */
 	status?: EntryStatus;
+	/** The source system's original publish date (ISO 8601) — preserved instead of stamping the
+	 * migration's run time. Only meaningful when `status` is "published" or "updated". */
+	publishedAt?: string;
 }
 
 /** What an adapter for a source platform must implement. Each method returns (or yields) source
@@ -71,13 +74,13 @@ export interface MigrationClient {
 	};
 	entries: {
 		create(input: {
-			contentTypeId: string;
+			templateId: string;
 			locale: string;
 			fields: Record<string, unknown>;
 			envId?: string;
 		}): Promise<{ id: string }>;
 		update(id: string, fields: Record<string, unknown>): Promise<unknown>;
-		updateStatus(id: string, status: EntryStatus): Promise<unknown>;
+		updateStatus(id: string, status: EntryStatus, publishedAt?: string): Promise<unknown>;
 	};
 	media: {
 		getUploadUrl(input: {

@@ -17,7 +17,7 @@ export interface EntryLinkView {
 export interface Entry<Fields = Record<string, unknown>> {
 	_id: string;
 	envId: string;
-	contentTypeId: string;
+	templateId: string;
 	locale: string;
 	/** Links this entry to its translations. Absent on an entry with no other locale yet — pass
 	 * `_id` (or an existing sibling's `groupId`) as `groupId` when creating a translation. Fetch
@@ -39,7 +39,7 @@ export interface Entry<Fields = Record<string, unknown>> {
 }
 
 export interface GetEntriesOptions extends Record<string, string | number | boolean | undefined> {
-	contentTypeId?: string;
+	templateId?: string;
 	locale?: string;
 	after?: string;
 	limit?: number;
@@ -58,7 +58,7 @@ export interface GetEntriesResult<Fields = Record<string, unknown>> {
 }
 
 export interface ListEntriesOptions extends Record<string, string | number | boolean | undefined> {
-	contentTypeId?: string;
+	templateId?: string;
 	locale?: string;
 	status?: EntryStatus;
 	envId?: Environment;
@@ -73,7 +73,7 @@ export interface GraphqlResponse<T> {
 }
 
 export interface CreateEntryInput {
-	contentTypeId: string;
+	templateId: string;
 	locale: string;
 	fields: Record<string, unknown>;
 	envId?: Environment;
@@ -186,7 +186,7 @@ export interface Webhook {
 	url: string;
 	events: WebhookEvent[];
 	envId?: string;
-	contentTypeId?: string;
+	templateId?: string;
 	includeContent?: boolean;
 	createdAt: string;
 }
@@ -195,6 +195,6 @@ export interface CreateWebhookInput {
 	url: string;
 	events: WebhookEvent[];
 	envId?: Environment;
-	contentTypeId?: string;
+	templateId?: string;
 	includeContent?: boolean;
 }

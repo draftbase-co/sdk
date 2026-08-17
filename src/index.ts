@@ -115,10 +115,16 @@ export function createClient({
 				id: string,
 				fields: Record<string, unknown>,
 			) => request<Entry<Fields>>(`/entries/${id}`, { method: "PATCH", body: { fields } }),
-			updateStatus: <Fields = Record<string, unknown>>(id: string, status: EntryStatus) =>
+			/** `publishedAt` is only honored on the entry's first transition into "published" — for
+			 * imports preserving a source system's original publish date. Omit it for a normal publish. */
+			updateStatus: <Fields = Record<string, unknown>>(
+				id: string,
+				status: EntryStatus,
+				publishedAt?: string,
+			) =>
 				request<Entry<Fields>>(`/entries/${id}/status`, {
 					method: "PATCH",
-					body: { status },
+					body: { status, ...(publishedAt ? { publishedAt } : {}) },
 				}),
 			rollback: <Fields = Record<string, unknown>>(id: string, version: number) =>
 				request<Entry<Fields>>(`/entries/${id}/rollback/${version}`, { method: "POST" }),

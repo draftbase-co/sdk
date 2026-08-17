@@ -22,12 +22,12 @@ test("getEntries sends bearer auth and query params", async () => {
 	}) as typeof fetch;
 
 	const client = createClient({ apiKey: "secret", baseUrl: "https://api.example.com" });
-	await client.getEntries({ contentTypeId: "abc", limit: 10 });
+	await client.getEntries({ templateId: "abc", limit: 10 });
 
 	assert.equal(capturedAuth, "Bearer secret");
 	assert.equal(
 		capturedUrl,
-		"https://api.example.com/delivery/entries?envId=production&contentTypeId=abc&limit=10",
+		"https://api.example.com/delivery/entries?envId=production&templateId=abc&limit=10",
 	);
 });
 
@@ -41,6 +41,49 @@ test("getEntries throws DraftbaseError on non-ok response", async () => {
 	stubFetch(500, undefined);
 	const client = createClient({ apiKey: "secret", retries: 0 });
 	await assert.rejects(() => client.getEntries(), DraftbaseError);
+});
+
+test("DraftbaseError message includes method, path, status, code and the API's error text", async () => {
+	stubFetch(400, { error: "templateId is required", code: "VALIDATION_FAILED" });
+	const client = createClient({
+		apiKey: "secret",
+		baseUrl: "https://api.example.com",
+		retries: 0,
+	});
+	await assert.rejects(
+		() => client.getEntries(),
+		(error: unknown) => {
+			assert.ok(error instanceof DraftbaseError);
+			assert.equal(error.code, "VALIDATION_FAILED");
+			assert.equal(
+				error.message,
+				"Draftbase API error: GET /delivery/entries -> 400 (VALIDATION_FAILED): templateId is required",
+			);
+			return true;
+		},
+	);
+});
+
+test("DraftbaseError prefers the uncaught-error path's `message` over a bare error class name", async () => {
+	stubFetch(400, {
+		statusCode: 400,
+		error: "Error",
+		code: "VALIDATION_FAILED",
+		message: "body/templateId Required",
+	});
+	const client = createClient({
+		apiKey: "secret",
+		baseUrl: "https://api.example.com",
+		retries: 0,
+	});
+	await assert.rejects(
+		() => client.getEntries(),
+		(error: unknown) => {
+			assert.ok(error instanceof DraftbaseError);
+			assert.match(error.message, /body\/templateId Required/);
+			return true;
+		},
+	);
 });
 
 test("getEntries retries on 503 then succeeds", async () => {
@@ -108,10 +151,28 @@ test("entries.create POSTs body and is not retried on 503", async () => {
 
 	const client = createClient({ apiKey: "secret" });
 	await assert.rejects(
-		() => client.entries.create({ contentTypeId: "ct1", locale: "en-US", fields: {} }),
+		() => client.entries.create({ templateId: "ct1", locale: "en-US", fields: {} }),
 		DraftbaseError,
 	);
 	assert.equal(calls, 1);
+});
+
+test("entries.updateStatus sends publishedAt only when given", async () => {
+	let capturedBody: unknown;
+	global.fetch = (async (_url: string | URL, init?: RequestInit) => {
+		capturedBody = JSON.parse(init?.body as string);
+		return new Response(JSON.stringify({ _id: "e1" }), { status: 200 });
+	}) as typeof fetch;
+
+	const client = createClient({ apiKey: "secret" });
+	await client.entries.updateStatus("e1", "published");
+	assert.deepEqual(capturedBody, { status: "published" });
+
+	await client.entries.updateStatus("e1", "published", "2020-01-01T00:00:00.000Z");
+	assert.deepEqual(capturedBody, {
+		status: "published",
+		publishedAt: "2020-01-01T00:00:00.000Z",
+	});
 });
 
 test("getEntries defaults envId from client `environment`, overridable per call", async () => {
