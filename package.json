@@ -1,6 +1,6 @@
 {
 	"name": "@draftbase/sdk",
-	"version": "0.2.3",
+	"version": "0.3.0",
 	"description": "Node.js / Next.js client for fetching content from Draftbase",
 	"keywords": [
 		"draftbase",
@@ -26,7 +26,8 @@
 		".": "./dist/index.js"
 	},
 	"bin": {
-		"draftbase-sync": "dist/cli.js"
+		"draftbase-sync": "dist/cli.js",
+		"draftbase-migrate": "dist/migrate-cli.js"
 	},
 	"files": [
 		"dist",
@@ -34,9 +35,9 @@
 		"README.md"
 	],
 	"scripts": {
-		"build": "tsc -p tsconfig.json && chmod +x dist/cli.js",
+		"build": "tsc -p tsconfig.json && chmod +x dist/cli.js dist/migrate-cli.js",
 		"lint": "tsc --noEmit",
-		"test": "node --test dist/*.test.js"
+		"test": "node --test $(find dist -name '*.test.js')"
 	},
 	"devDependencies": {
 		"@types/node": "^22.9.0",

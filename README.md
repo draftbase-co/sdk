@@ -143,6 +143,41 @@ await draftbase.getEntries(); // envId=staging
 await draftbase.getEntries({ envId: "production" }); // per-call override
 ```
 
+## Locales
+
+Each locale of a piece of content is its own entry, linked to its translations by `groupId`. Create the first locale normally, then pass its `_id` (or any sibling's `groupId`) as `groupId` when creating each additional locale:
+
+```ts
+const { id: enId } = await draftbase.entries.create({
+	contentTypeId: "blogPost",
+	locale: "en-US",
+	fields: { title: "Hello" },
+});
+
+await draftbase.entries.create({
+	contentTypeId: "blogPost",
+	locale: "fr-FR",
+	fields: { title: "Bonjour" },
+	groupId: enId, // links this entry to enId's locale group
+});
+```
+
+There's no separate endpoint for this — the same `getEntry`/`entries.get` you already use take a `locales` flag that attaches a `localizations` array (the entry's siblings, excluding itself) to the response:
+
+```ts
+const entry = await draftbase.getEntry(enId, undefined, undefined, true);
+entry.localizations; // -> [{ _id: "...", locale: "fr-FR", ... }]
+```
+
+`getLocalizations` (published-only, delivery-scoped) and `entries.getLocalizations` (any status, management-scoped) are thin convenience wrappers over that same call, returning the entry and its siblings as one flat array — including itself:
+
+```ts
+const locales = await draftbase.getLocalizations(enId); // [enEntry, frEntry, ...], published only
+const all = await draftbase.entries.getLocalizations(enId); // any status
+```
+
+An entry with no linked translations yet returns just itself (`localizations` is absent/`[]`). `locale` filters on `getEntries`/`entries.list` still work as before for listing one locale at a time — `locales`/`getLocalizations` is for pulling every locale of one specific entry, e.g. to build a language switcher.
+
 ## GraphQL
 
 Same delivery-scoped, published-only data as `getEntries`/`getEntry`, queryable as GraphQL (`Query.entries`, `Query.entry`, matching args including `envId`):
@@ -162,6 +197,7 @@ Throws `GraphqlError` (with an `errors` array) if the response has GraphQL error
 await draftbase.entries.list({ contentTypeId, locale, status }); // any status, all filters optional
 await draftbase.entries.get(id); // null if not found
 await draftbase.entries.create({ contentTypeId, locale, fields }); // -> { id }, starts as "draft"
+await draftbase.entries.create({ contentTypeId, locale, fields, groupId }); // links as another locale of `groupId`'s entry — see Locales below
 await draftbase.entries.update(id, fields); // replaces fields, bumps version, snapshots a revision
 await draftbase.entries.updateStatus(id, "published"); // draft | review | published | archived
 await draftbase.entries.rollback(id, version); // restore fields from a past revision
@@ -276,6 +312,58 @@ npx draftbase-sync --api-key <management-key> --out src/types/draftbase.d.ts
 ```
 
 Re-run whenever content types change (e.g. a `predev`/CI step) to keep `Entry<BlogPostFields>` etc. in sync with the CMS schema.
+
+## Migrating from another platform
+
+`draftbase-migrate` moves content models, locales, entries, and media (images/files) from another
+CMS into Draftbase. It's resumable — progress is written to a checkpoint file after every item, so
+you can stop (`Ctrl+C`) and rerun the same command to continue where it left off, with nothing
+recreated twice.
+
+```bash
+# Contentful — from a `contentful space export` JSON dump
+npx draftbase-migrate --source contentful --file export.json --api-key <management-key> --checkpoint ./migration.json
+
+# WordPress — reads posts/pages straight from the live REST API
+npx draftbase-migrate --source wordpress --url https://example.com --api-key <management-key> --checkpoint ./migration.json
+
+# Preview counts without writing anything
+npx draftbase-migrate --source contentful --file export.json --api-key <management-key> --checkpoint ./migration.json --dry-run
+```
+
+Entry-to-entry and entry-to-asset references are resolved automatically, even across circular
+references, once every item has been created — including entry links _inside_ Contentful rich text,
+which is converted to MDX (headings, marks, lists, tables, links, embeds), not carried over as raw
+document JSON. Known limits: WordPress content stays as raw rendered HTML, not converted to MDX;
+WordPress multilingual plugins (WPML/Polylang) aren't supported (single-locale only); embedded/linked
+assets inside converted rich text keep pointing at their original Contentful-hosted URL rather than
+the migrated copy.
+
+Only Contentful and WordPress ship out of the box. To migrate from anywhere else, write an adapter —
+any function returning a `MigrationSource` (`assets()`/`contentTypes()`/`entries()`, each an async
+iterable) works with `migrate()` and the same checkpoint/resume/retry behavior, no engine changes
+needed:
+
+```ts
+import { migrate, createClient, type MigrationSource } from "@draftbase/sdk";
+
+const source: MigrationSource = {
+	name: "my-cms",
+	async *assets() {
+		/* yield { key, url, fileName, contentType } */
+	},
+	async *contentTypes() {
+		/* yield { key, name, fields } */
+	},
+	async *entries() {
+		/* yield { key, contentTypeKey, locale, fields } */
+		/* reference another entry/asset with { $ref: key } / { $asset: key } — resolved after creation */
+	},
+};
+
+const client = createClient({ apiKey: process.env.DRAFTBASE_API_KEY! });
+const report = await migrate(client, source, { checkpointFile: "./migration.json" });
+```
 
 ## Using with Claude Code / AI coding agents
 

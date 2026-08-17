@@ -19,6 +19,13 @@ export interface Entry<Fields = Record<string, unknown>> {
 	envId: string;
 	contentTypeId: string;
 	locale: string;
+	/** Links this entry to its translations. Absent on an entry with no other locale yet — pass
+	 * `_id` (or an existing sibling's `groupId`) as `groupId` when creating a translation. Fetch
+	 * every locale with `entries.getLocalizations(id)` / `getLocalizations(id)`. */
+	groupId?: string;
+	/** This entry's sibling locales (same group, excluding itself) — present only when fetched
+	 * with `locales: true` on `getEntry`/`entries.get`, or via `getLocalizations`. */
+	localizations?: Entry<Fields>[];
 	fields: Fields;
 	status: EntryStatus;
 	version: number;
@@ -70,6 +77,9 @@ export interface CreateEntryInput {
 	locale: string;
 	fields: Record<string, unknown>;
 	envId?: Environment;
+	/** `_id` of an existing entry (any of its locales) to link this one to as another localization
+	 * of the same content. Omit to create a standalone entry. */
+	groupId?: string;
 }
 
 export type ContentTypeFieldType =

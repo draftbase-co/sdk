@@ -7,7 +7,9 @@ import { createClient, DraftbaseError, GraphqlError } from "./index.js";
 
 function stubFetch(status: number, body: unknown) {
 	global.fetch = (async () =>
-		new Response(status === 404 ? undefined : JSON.stringify(body), { status })) as typeof fetch;
+		new Response(status === 404 ? undefined : JSON.stringify(body), {
+			status,
+		})) as typeof fetch;
 }
 
 test("getEntries sends bearer auth and query params", async () => {
@@ -70,6 +72,33 @@ test("cacheTtlMs avoids a second fetch for the same GET", async () => {
 	assert.equal(calls, 1);
 });
 
+test("getLocalizations requests locales=true and flattens the entry with its siblings", async () => {
+	let capturedUrl = "";
+	global.fetch = (async (url: string | URL) => {
+		capturedUrl = url.toString();
+		return new Response(
+			JSON.stringify({
+				_id: "en1",
+				locale: "en-US",
+				localizations: [{ _id: "fr1", locale: "fr-FR" }],
+			}),
+			{ status: 200 },
+		);
+	}) as typeof fetch;
+
+	const client = createClient({ apiKey: "secret", baseUrl: "https://api.example.com" });
+	const result = await client.getLocalizations("en1");
+
+	assert.equal(
+		capturedUrl,
+		"https://api.example.com/delivery/entries/en1?envId=production&locales=true",
+	);
+	assert.deepEqual(result, [
+		{ _id: "en1", locale: "en-US", localizations: [{ _id: "fr1", locale: "fr-FR" }] },
+		{ _id: "fr1", locale: "fr-FR" },
+	]);
+});
+
 test("entries.create POSTs body and is not retried on 503", async () => {
 	let calls = 0;
 	global.fetch = (async () => {
@@ -112,9 +141,12 @@ test("graphql sends query/variables and returns data", async () => {
 	}) as typeof fetch;
 
 	const client = createClient({ apiKey: "secret" });
-	const data = await client.graphql<{ entry: { id: string } }>("query($id: ID!) { entry(id: $id) { id } }", {
-		id: "1",
-	});
+	const data = await client.graphql<{ entry: { id: string } }>(
+		"query($id: ID!) { entry(id: $id) { id } }",
+		{
+			id: "1",
+		},
+	);
 
 	assert.deepEqual(capturedBody, {
 		query: "query($id: ID!) { entry(id: $id) { id } }",
@@ -130,7 +162,7 @@ test("graphql throws GraphqlError when the response has errors", async () => {
 		})) as typeof fetch;
 
 	const client = createClient({ apiKey: "secret" });
-	await assert.rejects(() => client.graphql("{ entry(id: \"x\") { id } }"), GraphqlError);
+	await assert.rejects(() => client.graphql('{ entry(id: "x") { id } }'), GraphqlError);
 });
 
 test("cache: 'disk' persists across a fresh requester using the same directory", async () => {

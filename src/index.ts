@@ -26,6 +26,7 @@ import type {
 export { DraftbaseError, GraphqlError } from "./request.js";
 export { generateContentTypeTypes } from "./codegen.js";
 export * from "./types.js";
+export * from "./migration/index.js";
 
 export interface ClientOptions extends Omit<RequesterOptions, "baseUrl"> {
 	apiKey: string;
@@ -51,10 +52,22 @@ export function createClient({
 			id: string,
 			envId: Environment = environment,
 			include?: number,
+			locales?: boolean,
 		) =>
 			request<Entry<Fields> | null>(`/delivery/entries/${id}`, {
-				params: { envId, include },
+				params: { envId, include, locales },
 			}),
+		/** Every published entry (across locales) sharing `id`'s locale group, including itself.
+		 * A thin wrapper over `getEntry(id, envId, undefined, true)`. */
+		getLocalizations: async <Fields = Record<string, unknown>>(
+			id: string,
+			envId: Environment = environment,
+		) => {
+			const entry = await request<Entry<Fields> | null>(`/delivery/entries/${id}`, {
+				params: { envId, locales: true },
+			});
+			return entry ? [entry, ...(entry.localizations ?? [])] : null;
+		},
 
 		/** Raw GraphQL over the same delivery-scoped, published-only data. */
 		graphql: async <T = unknown>(query: string, variables?: Record<string, unknown>) => {
@@ -77,7 +90,22 @@ export function createClient({
 				id: string,
 				envId: Environment = environment,
 				include?: number,
-			) => request<Entry<Fields> | null>(`/entries/${id}`, { params: { envId, include } }),
+				locales?: boolean,
+			) =>
+				request<Entry<Fields> | null>(`/entries/${id}`, {
+					params: { envId, include, locales },
+				}),
+			/** Every entry (across locales, any status) sharing `id`'s locale group, including itself.
+			 * A thin wrapper over `get(id, envId, undefined, true)`. */
+			getLocalizations: async <Fields = Record<string, unknown>>(
+				id: string,
+				envId: Environment = environment,
+			) => {
+				const entry = await request<Entry<Fields> | null>(`/entries/${id}`, {
+					params: { envId, locales: true },
+				});
+				return entry ? [entry, ...(entry.localizations ?? [])] : null;
+			},
 			create: (input: CreateEntryInput) =>
 				request<{ id: string }>("/entries", {
 					method: "POST",
