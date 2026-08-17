@@ -302,33 +302,57 @@ try {
 - Set `cacheTtlMs` on `createClient` to cache read responses for that long (default `0`, disabled). Create a second client with a different `cacheTtlMs` if you need both cached and uncached reads in one process.
 - `cache: "memory"` (default) caches per client instance/process. `cache: "disk"` persists across processes under `diskCacheDir` (default an OS-temp folder) — Node-only, and only useful where the filesystem is writable and persistent between invocations (a long-running server or local dev, not typical serverless/edge runtimes).
 
-## Content type sync (codegen)
+## CLI
+
+One `draftbase` bin covers login, codegen, and migration. Install it globally to get a bare
+`draftbase` command on your `PATH`:
+
+```bash
+npm install -g @draftbase/sdk
+# or: pnpm add -g @draftbase/sdk / yarn global add @draftbase/sdk
+
+draftbase login
+```
+
+No install: since the package name (`@draftbase/sdk`) differs from the bin name (`draftbase`),
+plain `npx draftbase ...` won't resolve — use `npx -p @draftbase/sdk draftbase ...` instead:
+
+```bash
+npx -p @draftbase/sdk draftbase login
+```
+
+`draftbase login` opens your browser for OAuth login and stores a refreshable session under
+`~/.draftbase`. Every subcommand below accepts either that session or an explicit
+`--api-key <management-key>` (or `DRAFTBASE_API_KEY`).
+
+### Content type sync (codegen)
 
 Pull your org's content types and generate a `.d.ts` with one `interface` per content type:
 
 ```bash
-npx draftbase-sync --api-key <management-key> --out src/types/draftbase.d.ts
-# or: DRAFTBASE_API_KEY=... npx draftbase-sync --out src/types/draftbase.d.ts
+draftbase types --out src/types/draftbase.d.ts
+# or with an API key instead of a login session:
+draftbase types --api-key <management-key> --out src/types/draftbase.d.ts
 ```
 
 Re-run whenever content types change (e.g. a `predev`/CI step) to keep `Entry<BlogPostFields>` etc. in sync with the CMS schema.
 
 ## Migrating from another platform
 
-`draftbase-migrate` moves content models, locales, entries, and media (images/files) from another
+`draftbase migrate` moves content models, locales, entries, and media (images/files) from another
 CMS into Draftbase. It's resumable — progress is written to a checkpoint file after every item, so
 you can stop (`Ctrl+C`) and rerun the same command to continue where it left off, with nothing
 recreated twice.
 
 ```bash
 # Contentful — from a `contentful space export` JSON dump
-npx draftbase-migrate --source contentful --file export.json --api-key <management-key> --checkpoint ./migration.json
+draftbase migrate --source contentful --file export.json --checkpoint ./migration.json
 
 # WordPress — reads posts/pages straight from the live REST API
-npx draftbase-migrate --source wordpress --url https://example.com --api-key <management-key> --checkpoint ./migration.json
+draftbase migrate --source wordpress --url https://example.com --checkpoint ./migration.json
 
 # Preview counts without writing anything
-npx draftbase-migrate --source contentful --file export.json --api-key <management-key> --checkpoint ./migration.json --dry-run
+draftbase migrate --source contentful --file export.json --checkpoint ./migration.json --dry-run
 ```
 
 Entry-to-entry and entry-to-asset references are resolved automatically, even across circular
@@ -374,7 +398,7 @@ If you're an agent implementing Draftbase in a project, follow this checklist:
 3. **Pick the right key scope**: `delivery` key for read-only published content (`getEntries`/`getEntry`/`graphql`); `management` key for anything under `entries`/`contentTypes`/`media`/`webhooks`. Ask the user which they have if unclear — a `delivery` key cannot call management methods and will 401/403.
 4. **All methods are async** and return typed data directly (no `.data` wrapper) — `entries.list()` etc. — except `getEntry`/`entries.get`, which resolve to `null` on a 404 instead of throwing. Handle that `null` case explicitly.
 5. **Don't wrap calls in retry loops** — reads already retry internally (see [Retries & caching](#retries--caching)); adding your own doubles the backoff.
-6. **Generate types before writing content-shape code**: run `npx draftbase-sync --api-key <management-key> --out <path>` first, then import the generated interfaces as the `Entry<T>` type param — don't hand-write field interfaces that can drift from the live schema.
+6. **Generate types before writing content-shape code**: run `draftbase types --api-key <management-key> --out <path>` first, then import the generated interfaces as the `Entry<T>` type param — don't hand-write field interfaces that can drift from the live schema.
 7. **This package has zero runtime dependencies** and works in any Node/Next.js context (route handlers, server components, scripts) — it is not usable in a browser bundle (no `apiKey` should ever ship client-side).
 
 ## FAQ
@@ -383,7 +407,7 @@ If you're an agent implementing Draftbase in a project, follow this checklist:
 Draftbase is a lightweight, MDX-based headless CMS built for React and Next.js developers. Content is authored as MDX/markdown with typed fields, then delivered via REST, GraphQL, or this SDK, and rendered with [`@draftbase/renderer`](https://www.npmjs.com/package/@draftbase/renderer) into React, Vue, or static HTML.
 
 **How is `@draftbase/sdk` different from calling the REST API directly?**
-It adds typed responses, automatic retries with backoff on transient read failures, optional response caching, cursor pagination handling, and a `draftbase-sync` CLI that generates TypeScript interfaces from your live content types — all of that would otherwise be hand-rolled `fetch` boilerplate.
+It adds typed responses, automatic retries with backoff on transient read failures, optional response caching, cursor pagination handling, and a `draftbase types` command that generates TypeScript interfaces from your live content types — all of that would otherwise be hand-rolled `fetch` boilerplate.
 
 **Does this work with the Next.js App Router / React Server Components?**
 Yes — every method returns a plain `Promise`, so `await draftbase.getEntry(id)` works directly inside an `async` Server Component or Route Handler with no extra data-fetching library.
@@ -392,7 +416,7 @@ Yes — every method returns a plain `Promise`, so `await draftbase.getEntry(id)
 No — it's a server-side client. API keys are secrets and must never ship to a browser bundle; call this SDK from a server component, route handler, loader, or backend, and expose only the data you need to the client.
 
 **How do I keep TypeScript types in sync with my CMS schema?**
-Run `npx draftbase-sync --api-key <management-key> --out <path>` (see [Content type sync](#content-type-sync-codegen)) whenever content types change; it regenerates one `interface` per content type from the live schema.
+Run `draftbase types --api-key <management-key> --out <path>` (see [Content type sync](#content-type-sync-codegen)) whenever content types change; it regenerates one `interface` per content type from the live schema.
 
 ## Links
 

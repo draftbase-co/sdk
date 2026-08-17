@@ -22,6 +22,8 @@ export class GraphqlError extends Error {
 export interface RequesterOptions {
 	apiKey: string;
 	baseUrl: string;
+	/** Org id sent as `x-org-id`. Required when `apiKey` is an OAuth access token rather than a Draftbase API key. */
+	orgId?: string;
 	/** Retries for read requests on network errors or 429/5xx. Default 2. */
 	retries?: number;
 	/** Cache TTL in ms for read requests. 0 (default) disables caching. */
@@ -57,6 +59,7 @@ function wait(ms: number) {
 export function createRequester({
 	apiKey,
 	baseUrl,
+	orgId,
 	retries = 2,
 	cacheTtlMs = 0,
 	cache = "memory",
@@ -86,6 +89,7 @@ export function createRequester({
 					method,
 					headers: {
 						Authorization: `Bearer ${apiKey}`,
+						...(orgId ? { "x-org-id": orgId } : {}),
 						...(options.body !== undefined
 							? { "Content-Type": "application/json" }
 							: {}),
