@@ -135,19 +135,18 @@ export function createClient({
 
 		contentTypes: {
 			list: (options: ListContentTypesOptions = {}) =>
-				request<ContentType[]>("/content-types", {
+				request<ContentType[]>("/templates", {
 					params: { envId: environment, ...options },
 				}),
-			get: (id: string) => request<ContentType | null>(`/content-types/${id}`),
+			get: (id: string) => request<ContentType | null>(`/templates/${id}`),
 			create: (input: CreateContentTypeInput) =>
-				request<{ id: string }>("/content-types", {
+				request<{ id: string }>("/templates", {
 					method: "POST",
 					body: { envId: environment, ...input },
 				}),
 			update: (id: string, input: UpdateContentTypeInput) =>
-				request<ContentType>(`/content-types/${id}`, { method: "PATCH", body: input }),
-			delete: (id: string) =>
-				request<{ ok: true }>(`/content-types/${id}`, { method: "DELETE" }),
+				request<ContentType>(`/templates/${id}`, { method: "PATCH", body: input }),
+			delete: (id: string) => request<{ ok: true }>(`/templates/${id}`, { method: "DELETE" }),
 		},
 
 		media: {
