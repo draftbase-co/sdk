@@ -310,7 +310,7 @@ try {
 - Read requests (`getEntries`/`getEntry`/`graphql`/`entries.list`/`entries.get`/`contentTypes.list`/`contentTypes.get`) retry automatically on network errors or `429`/`502`/`503`/`504`, with exponential backoff (`300ms`, `600ms`, ...). Disable with `retries: 0`.
 - Mutations (`create`/`update`/`delete`/...) are never auto-retried — they aren't idempotent.
 - Set `cacheTtlMs` on `createClient` to cache read responses for that long (default `0`, disabled). Create a second client with a different `cacheTtlMs` if you need both cached and uncached reads in one process.
-- `cache: "memory"` (default) caches per client instance/process. `cache: "disk"` persists across processes under `diskCacheDir` (default an OS-temp folder) — Node-only, and only useful where the filesystem is writable and persistent between invocations (a long-running server or local dev, not typical serverless/edge runtimes). On React Native, `cache: "disk"` automatically falls back to memory (Metro resolves the `.native.js` build, which has no Node filesystem dependency) — no bundler config needed.
+- `cache: "memory"` (default) caches per client instance/process. `cache: "disk"` persists across processes under `diskCacheDir` (default an OS-temp folder) — Node-only, and only useful where the filesystem is writable and persistent between invocations (a long-running server or local dev, not typical serverless/edge runtimes). On React Native, `cache: "disk"` automatically falls back to memory (the package's `browser`/`react-native` fields point Metro at the Node-free `cacheStore.native.js` build) — no bundler config needed.
 
 ## CLI
 

@@ -25,6 +25,12 @@
 	"exports": {
 		".": "./dist/index.js"
 	},
+	"browser": {
+		"./dist/cacheStore.js": "./dist/cacheStore.native.js"
+	},
+	"react-native": {
+		"./dist/cacheStore.js": "./dist/cacheStore.native.js"
+	},
 	"bin": {
 		"draftbase": "dist/cli.js"
 	},
