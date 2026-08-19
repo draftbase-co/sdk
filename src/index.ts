@@ -26,7 +26,6 @@ import type {
 export { DraftbaseError, GraphqlError } from "./request.js";
 export { generateContentTypeTypes } from "./codegen.js";
 export * from "./types.js";
-export * from "./migration/index.js";
 
 export interface ClientOptions extends Omit<RequesterOptions, "baseUrl"> {
 	apiKey: string;

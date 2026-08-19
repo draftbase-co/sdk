@@ -373,31 +373,13 @@ WordPress multilingual plugins (WPML/Polylang) aren't supported (single-locale o
 assets inside converted rich text keep pointing at their original Contentful-hosted URL rather than
 the migrated copy.
 
-Only Contentful and WordPress ship out of the box. To migrate from anywhere else, write an adapter —
-any function returning a `MigrationSource` (`assets()`/`contentTypes()`/`entries()`, each an async
-iterable) works with `migrate()` and the same checkpoint/resume/retry behavior, no engine changes
-needed:
-
-```ts
-import { migrate, createClient, type MigrationSource } from "@draftbase/sdk";
-
-const source: MigrationSource = {
-	name: "my-cms",
-	async *assets() {
-		/* yield { key, url, fileName, contentType } */
-	},
-	async *contentTypes() {
-		/* yield { key, name, fields } */
-	},
-	async *entries() {
-		/* yield { key, contentTypeKey, locale, fields } */
-		/* reference another entry/asset with { $ref: key } / { $asset: key } — resolved after creation */
-	},
-};
-
-const client = createClient({ apiKey: process.env.DRAFTBASE_API_KEY! });
-const report = await migrate(client, source, { checkpointFile: "./migration.json" });
-```
+Only Contentful and WordPress ship out of the box, both driven by the `draftbase migrate` CLI
+subcommand above — migration tooling (`migrate()`, `MigrationSource`, adapters) is CLI-internal and
+not exported from `@draftbase/sdk`'s main entry. To migrate from anywhere else, add a new adapter in
+the SDK source (`src/migration/adapters/`) — any function returning a `MigrationSource`
+(`assets()`/`contentTypes()`/`entries()`, each an async iterable) works with `migrate()` and the same
+checkpoint/resume/retry behavior, no engine changes needed — and wire it into `MIGRATION_SOURCES` in
+`src/cli.ts`.
 
 ## Using with Claude Code / AI coding agents
 
