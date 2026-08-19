@@ -135,6 +135,16 @@ const entry = await draftbase.getEntry("<entry id>"); // null if not found
 
 `getEntries`/`getEntry` responses are CDN-cached at the edge (per API key, keyed on the full query) — a cache hit is served without reaching the origin, so it doesn't count against your org's rate limit. Cache misses do.
 
+To pull a whole catalog (every blog post for a sitemap, every entry of a content type) instead of one page, use `getAllEntries` — it follows `nextCursor` for you:
+
+```ts
+for await (const post of draftbase.getAllEntries<BlogPostFields>({ contentTypeId: "blogPost" })) {
+	// one entry at a time, across as many pages as it takes
+}
+```
+
+Not usable with `mode: "semantic"` (no cursor pagination there — page manually with `getEntries` instead).
+
 Pin a client to one environment (matches each entry's `envId`, e.g. `"staging"` vs `"production"`):
 
 ```ts

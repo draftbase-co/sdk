@@ -48,6 +48,22 @@ export function createClient({
 			request<GetEntriesResult<Fields>>("/delivery/entries", {
 				params: { envId: environment, ...options },
 			}),
+		/** Auto-paginates `getEntries`, following `nextCursor` until exhausted. Not usable with
+		 * `mode: "semantic"` (no cursor pagination). */
+		getAllEntries: async function* <Fields = Record<string, unknown>>(
+			options: Omit<GetEntriesOptions, "after" | "skip"> = {},
+		): AsyncGenerator<Entry<Fields>> {
+			let after: string | undefined;
+			while (true) {
+				const { entries, nextCursor } = await request<GetEntriesResult<Fields>>(
+					"/delivery/entries",
+					{ params: { envId: environment, ...options, after } },
+				);
+				yield* entries;
+				if (!nextCursor) return;
+				after = nextCursor;
+			}
+		},
 		getEntry: <Fields = Record<string, unknown>>(
 			id: string,
 			envId: Environment = environment,

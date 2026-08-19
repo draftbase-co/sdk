@@ -194,6 +194,35 @@ test("getEntries defaults envId from client `environment`, overridable per call"
 	assert.equal(capturedUrls[1], "https://api.example.com/delivery/entries?envId=production");
 });
 
+test("getAllEntries follows nextCursor until exhausted", async () => {
+	const capturedUrls: string[] = [];
+	const pages = [
+		{ entries: [{ _id: "1" }, { _id: "2" }], nextCursor: "2" },
+		{ entries: [{ _id: "3" }], nextCursor: null },
+	];
+	global.fetch = (async (url: string | URL) => {
+		capturedUrls.push(url.toString());
+		return new Response(JSON.stringify(pages.shift()), { status: 200 });
+	}) as typeof fetch;
+
+	const client = createClient({ apiKey: "secret", baseUrl: "https://api.example.com" });
+	const entries = [];
+	for await (const entry of client.getAllEntries({ templateId: "abc" })) entries.push(entry);
+
+	assert.deepEqual(
+		entries.map((e) => e._id),
+		["1", "2", "3"],
+	);
+	assert.equal(
+		capturedUrls[0],
+		"https://api.example.com/delivery/entries?envId=production&templateId=abc",
+	);
+	assert.equal(
+		capturedUrls[1],
+		"https://api.example.com/delivery/entries?envId=production&templateId=abc&after=2",
+	);
+});
+
 test("graphql sends query/variables and returns data", async () => {
 	let capturedBody: unknown;
 	global.fetch = (async (_url: string | URL, init?: RequestInit) => {

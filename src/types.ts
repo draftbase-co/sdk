@@ -61,8 +61,9 @@ export interface GetEntriesOptions extends Record<string, string | number | bool
 	select?: string;
 }
 
-/** Per-field filters go as extra keys, e.g. `{ "fields.slug": "my-post" }` (exact) or
- * `{ "fields.tags[in]": "guide,howto" }` (comma list, matches any). */
+/** Per-field filters go as extra keys: `{ "fields.slug": "my-post" }` (exact) or
+ * `{ "fields.tags[in]": "guide,howto" }` (any match). `reference`/`media` fields filter by the
+ * linked doc's raw `_id` string, not its slug or title. */
 
 export interface GetEntriesResult<Fields = Record<string, unknown>> {
 	entries: Entry<Fields>[];
