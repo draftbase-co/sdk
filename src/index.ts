@@ -53,9 +53,10 @@ export function createClient({
 			envId: Environment = environment,
 			include?: number,
 			locales?: boolean,
+			entryLinkFields?: string,
 		) =>
 			request<Entry<Fields> | null>(`/delivery/entries/${id}`, {
-				params: { envId, include, locales },
+				params: { envId, include, locales, entryLinkFields },
 			}),
 		/** Every published entry (across locales) sharing `id`'s locale group, including itself.
 		 * A thin wrapper over `getEntry(id, envId, undefined, true)`. */
@@ -91,9 +92,10 @@ export function createClient({
 				envId: Environment = environment,
 				include?: number,
 				locales?: boolean,
+				entryLinkFields?: string,
 			) =>
 				request<Entry<Fields> | null>(`/entries/${id}`, {
-					params: { envId, include, locales },
+					params: { envId, include, locales, entryLinkFields },
 				}),
 			/** Every entry (across locales, any status) sharing `id`'s locale group, including itself.
 			 * A thin wrapper over `get(id, envId, undefined, true)`. */

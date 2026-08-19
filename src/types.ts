@@ -12,6 +12,8 @@ export interface EntryLinkView {
 	templateId: string;
 	title: string;
 	status: EntryStatus;
+	/** Present when `entryLinkFields` was passed — the requested keys from the linked entry's `fields`. */
+	fields?: Record<string, unknown>;
 }
 
 export interface Entry<Fields = Record<string, unknown>> {
@@ -49,6 +51,8 @@ export interface GetEntriesOptions extends Record<string, string | number | bool
 	envId?: Environment;
 	/** Depth (0-5) to resolve `reference`/`media` fields into nested objects instead of raw ids. */
 	include?: number;
+	/** Comma-separated `fields.<key>` list to pull onto each `entryLinks` target, e.g. "slug". */
+	entryLinkFields?: string;
 	/** Relevance-ranked keyword search across text/richText fields. */
 	search?: string;
 	/** "semantic" embeds `search` and matches by meaning instead of keywords. No cursor pagination in this mode — `after` is ignored. */
@@ -71,6 +75,7 @@ export interface ListEntriesOptions extends Record<string, string | number | boo
 	status?: EntryStatus;
 	envId?: Environment;
 	include?: number;
+	entryLinkFields?: string;
 	search?: string;
 	mode?: "text" | "semantic";
 }
