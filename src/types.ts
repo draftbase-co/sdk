@@ -1,5 +1,15 @@
 export type EntryStatus = "draft" | "published" | "updated" | "archived";
 
+export interface CacheEntry {
+	expires: number;
+	value: unknown;
+}
+
+export interface CacheStore {
+	get(key: string): Promise<CacheEntry | undefined>;
+	set(key: string, entry: CacheEntry): Promise<void>;
+}
+
 export const DEFAULT_ENVIRONMENT = "production";
 export const SUGGESTED_ENVIRONMENTS = ["production", "staging", "dev"] as const;
 

@@ -1,4 +1,5 @@
-import { createDiskCache, createMemoryCache, type CacheStore } from "./cacheStore.js";
+import { createDiskCache, createMemoryCache } from "./cacheStore.js";
+import type { CacheStore } from "./types.js";
 
 export class DraftbaseError extends Error {
 	constructor(

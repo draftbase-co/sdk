@@ -2,16 +2,7 @@ import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-
-export interface CacheEntry {
-	expires: number;
-	value: unknown;
-}
-
-export interface CacheStore {
-	get(key: string): Promise<CacheEntry | undefined>;
-	set(key: string, entry: CacheEntry): Promise<void>;
-}
+import type { CacheEntry, CacheStore } from "./types.js";
 
 export function createMemoryCache(): CacheStore {
 	const map = new Map<string, CacheEntry>();
