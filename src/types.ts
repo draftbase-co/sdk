@@ -41,8 +41,11 @@ export interface Entry<Fields = Record<string, unknown>> {
 export interface GetEntriesOptions extends Record<string, string | number | boolean | undefined> {
 	templateId?: string;
 	locale?: string;
+	/** Mutually exclusive with `skip`. */
 	after?: string;
 	limit?: number;
+	/** Mutually exclusive with `after`. */
+	skip?: number;
 	envId?: Environment;
 	/** Depth (0-5) to resolve `reference`/`media` fields into nested objects instead of raw ids. */
 	include?: number;
@@ -50,7 +53,12 @@ export interface GetEntriesOptions extends Record<string, string | number | bool
 	search?: string;
 	/** "semantic" embeds `search` and matches by meaning instead of keywords. No cursor pagination in this mode — `after` is ignored. */
 	mode?: "text" | "semantic";
+	/** Comma-separated `fields.<key>` list to trim each entry's `fields` to. */
+	select?: string;
 }
+
+/** Per-field filters go as extra keys, e.g. `{ "fields.slug": "my-post" }` (exact) or
+ * `{ "fields.tags[in]": "guide,howto" }` (comma list, matches any). */
 
 export interface GetEntriesResult<Fields = Record<string, unknown>> {
 	entries: Entry<Fields>[];
