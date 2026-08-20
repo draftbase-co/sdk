@@ -32,8 +32,7 @@ export interface Entry<Fields = Record<string, unknown>> {
 	templateId: string;
 	locale: string;
 	/** Links this entry to its translations. Absent on an entry with no other locale yet — pass
-	 * `_id` (or an existing sibling's `groupId`) as `groupId` when creating a translation. Fetch
-	 * every locale with `entries.getLocalizations(id)` / `getLocalizations(id)`. */
+	 * `_id` (or an existing sibling's `groupId`) as `groupId` when creating a translation. */
 	groupId?: string;
 	/** This entry's sibling locales (same group, excluding itself) — present only when fetched
 	 * with `locales: true` on `getEntry`/`entries.get`, or via `getLocalizations`. */
@@ -71,9 +70,8 @@ export interface GetEntriesOptions extends Record<string, string | number | bool
 	select?: string;
 }
 
-/** Per-field filters go as extra keys: `{ "fields.slug": "my-post" }` (exact) or
- * `{ "fields.tags[in]": "guide,howto" }` (any match). `reference`/`media` fields filter by the
- * linked doc's raw `_id` string, not its slug or title. */
+/** Per-field filters go as extra keys: `{ "fields.slug": "my-post" }` (exact) or `{ "fields.tags[in]": "guide,howto" }`
+ * (any match). `reference`/`media` fields filter by the linked doc's raw `_id`, not its slug or title. */
 
 export interface GetEntriesResult<Fields = Record<string, unknown>> {
 	entries: Entry<Fields>[];

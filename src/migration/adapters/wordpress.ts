@@ -79,9 +79,8 @@ async function fetchAllPages<T>(url: URL, perPage: number): Promise<T[]> {
 	return items;
 }
 
-/** Pulls posts/pages from the WordPress REST API (`/wp-json/wp/v2/...`) and normalizes them into a
- * `MigrationSource`. Single-locale only — WPML/Polylang multilingual content isn't supported. Rich
- * text is carried through as raw rendered HTML, not converted to Draftbase's MDX dialect. */
+/** Pulls posts/pages from the WordPress REST API and normalizes them into a `MigrationSource`. Single-locale
+ * only (WPML/Polylang unsupported); rich text is carried through as raw rendered HTML, not converted to MDX. */
 export async function fromWordPress(options: WordPressSourceOptions): Promise<MigrationSource> {
 	const base = options.url.replace(/\/+$/, "");
 	const postTypes = options.postTypes ?? ["posts", "pages"];

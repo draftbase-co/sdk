@@ -115,9 +115,8 @@ export function createRequester({
 							message?: unknown;
 						};
 						if (typeof parsed.code === "string") code = parsed.code;
-						// `error` is prose on most failures; the uncaught-error path instead puts the
-						// error's class name there (e.g. "Error", "BSONError" — no spaces) and the real
-						// detail in `message` — prefer whichever one reads like a sentence.
+						// `error` is prose on most failures, but the uncaught-error path puts the error's class
+						// name there instead (e.g. "BSONError" — no spaces); prefer whichever reads like a sentence.
 						const error = typeof parsed.error === "string" ? parsed.error : undefined;
 						const message =
 							typeof parsed.message === "string" ? parsed.message : undefined;

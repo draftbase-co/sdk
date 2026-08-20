@@ -148,9 +148,8 @@ async function exchangeToken(
 	return res.json();
 }
 
-/** Resolves credentials for a CLI command: an explicit --api-key/DRAFTBASE_API_KEY wins (no
- * org header needed, keys are already org-scoped); otherwise falls back to a stored OAuth
- * session from `login`, refreshing it first if it's within a minute of expiring. */
+/** Resolves credentials for a CLI command: an explicit --api-key/DRAFTBASE_API_KEY wins; otherwise falls back
+ * to a stored OAuth session from `login`, refreshing it first if it's within a minute of expiring. */
 export async function resolveCredentials(
 	args: Record<string, string>,
 ): Promise<{ apiKey: string; orgId?: string; baseUrl?: string }> {

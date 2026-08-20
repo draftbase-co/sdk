@@ -173,10 +173,8 @@ export async function migrate(
 							})
 						).id;
 					} catch (createError) {
-						// A prior run may have created it server-side before crashing client-side
-						// (id never made it into the checkpoint) — reuse it instead of failing. The
-						// conflicting id is deterministic (derived from `name`) and the server echoes
-						// it back in the error text, so pull it from there rather than guess.
+						// A prior run may have created it server-side before crashing client-side (id never made
+						// it into the checkpoint) — reuse it by parsing the deterministic id out of the error text.
 						const conflictId =
 							createError instanceof DraftbaseError &&
 							createError.code === "ALREADY_EXISTS"

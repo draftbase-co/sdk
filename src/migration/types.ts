@@ -28,9 +28,8 @@ export interface MigrationContentType {
 	fields: ContentTypeField[];
 }
 
-/** Embed in a string field (e.g. converted rich text) to reference an entry that may not exist yet
- * — e.g. inside `<EntryLink id="...">`. Resolved to the real id by the engine once every entry has
- * been created; left in place (harmless, non-matching) if the target never resolves. */
+/** Embed in a string field to reference an entry that may not exist yet (e.g. inside `<EntryLink id="...">`).
+ * Resolved to the real id by the engine once every entry has been created; left in place if it never resolves. */
 export function refToken(key: string): string {
 	return `§ref:${key}§`;
 }
@@ -51,10 +50,8 @@ export interface MigrationEntry {
 	publishedAt?: string;
 }
 
-/** What an adapter for a source platform must implement. Each method returns (or yields) source
- * data already normalized into Draftbase shapes — content type field types mapped, reference/media
- * values wrapped as `$ref`/`$asset` markers. Order doesn't matter across methods; the engine always
- * runs assets, then content types, then entries. */
+/** What an adapter for a source platform must implement. Each method returns/yields source data already
+ * normalized into Draftbase shapes; the engine always runs assets, then content types, then entries. */
 export interface MigrationSource {
 	name: string;
 	assets(): AsyncIterable<MigrationAsset> | Iterable<MigrationAsset>;

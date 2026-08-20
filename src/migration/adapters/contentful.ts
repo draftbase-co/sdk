@@ -106,10 +106,8 @@ function localesForEntry(entry: ContentfulEntry): string[] {
 }
 
 // --- Rich text (Contentful's node-tree document) -> MDX ------------------------------------
-// Hand-rolled against Contentful's public rich text spec (stable node/mark type strings) rather
-// than pulled through @contentful/rich-text-html-renderer + an HTML->MDX pipeline — that detour
-// would both lose fidelity on the round trip and add a handful of runtime deps to a package that
-// otherwise has none.
+// Hand-rolled against Contentful's rich text spec rather than @contentful/rich-text-html-renderer +
+// an HTML->MDX pipeline — that detour loses fidelity and adds deps to an otherwise dep-free package.
 
 interface CfNode {
 	nodeType: string;
@@ -271,11 +269,8 @@ function renderBlock(node: CfNode, ctx: RichTextContext, indent = 0): string {
 	}
 }
 
-/** Converts a Contentful rich text document to an MDX string. Entry references become
- * `<EntryLink id="...">` (Draftbase's native in-body link, resolved by the migration engine once
- * the target entry exists); embedded/linked assets point at their original Contentful-hosted URL
- * — they aren't re-pointed at the migrated copy, since resolving that would need an extra API round
- * trip per image with no id-only endpoint to support it. */
+/** Converts a Contentful rich text document to an MDX string. Entry references become `<EntryLink id="...">`,
+ * resolved by the migration engine; embedded assets keep pointing at their original Contentful-hosted URL. */
 export function contentfulRichTextToMdx(document: CfDocument, ctx: RichTextContext): string {
 	return (document.content ?? [])
 		.map((node) => renderBlock(node, ctx))
@@ -285,10 +280,8 @@ export function contentfulRichTextToMdx(document: CfDocument, ctx: RichTextConte
 
 // --- Adapter ---------------------------------------------------------------------------------
 
-/** Reads a `contentful-export` CLI JSON dump (`contentful space export`) and normalizes it into a
- * `MigrationSource`. Multi-locale entries become one Draftbase entry per locale; entry links to a
- * multi-locale target are pointed at the matching (or default) locale variant. Rich text fields are
- * converted to MDX, not carried over as Contentful's document JSON. */
+/** Reads a `contentful-export` CLI JSON dump and normalizes it into a `MigrationSource`. Multi-locale entries
+ * become one Draftbase entry per locale; entry links to a multi-locale target follow the matching/default locale. */
 export async function fromContentfulExport(filePath: string): Promise<MigrationSource> {
 	const raw = JSON.parse(await readFile(filePath, "utf8")) as ContentfulExport;
 	const defaultLocale = raw.locales?.find((locale) => locale.default)?.code;
