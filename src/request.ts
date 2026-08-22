@@ -102,7 +102,8 @@ export function createRequester({
 
 				if (!res.ok) {
 					if (RETRYABLE_STATUSES.has(res.status) && attempt < maxAttempts - 1) {
-						await wait(2 ** attempt * 300);
+						const retryAfter = Number(res.headers.get("retry-after"));
+						await wait(retryAfter > 0 ? retryAfter * 1000 : 2 ** attempt * 300);
 						continue;
 					}
 					const body = await res.text();
