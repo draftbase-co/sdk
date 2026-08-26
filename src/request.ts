@@ -43,7 +43,7 @@ export interface RequestOptions {
 	read?: boolean;
 }
 
-const RETRYABLE_STATUSES = new Set([429, 502, 503, 504]);
+const RETRYABLE_STATUSES = new Set([502, 503, 504]);
 
 function buildUrl(baseUrl: string, path: string, params?: RequestOptions["params"]) {
 	const url = new URL(path, baseUrl);
@@ -101,6 +101,18 @@ export function createRequester({
 				if (res.status === 404) return null as T;
 
 				if (!res.ok) {
+					// 429 doesn't count against maxAttempts: it's the server pacing us, not failing us,
+					// so we wait it out (capped) instead of giving up and breaking builds under load.
+					if (res.status === 429) {
+						const retryAfter = Number(res.headers.get("retry-after"));
+						await wait(
+							retryAfter > 0
+								? retryAfter * 1000
+								: Math.min(2 ** attempt * 300, 30_000),
+						);
+						attempt--;
+						continue;
+					}
 					if (RETRYABLE_STATUSES.has(res.status) && attempt < maxAttempts - 1) {
 						const retryAfter = Number(res.headers.get("retry-after"));
 						await wait(retryAfter > 0 ? retryAfter * 1000 : 2 ** attempt * 300);
