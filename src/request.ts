@@ -27,6 +27,8 @@ export interface RequesterOptions {
 	orgId?: string;
 	/** Retries for read requests on network errors or 429/5xx. Default 2. */
 	retries?: number;
+	/** Aborts a request that hangs longer than this, in ms. Default 15000. */
+	timeoutMs?: number;
 	/** Cache TTL in ms for read requests. 0 (default) disables caching. */
 	cacheTtlMs?: number;
 	/** Where to cache read responses when cacheTtlMs > 0. Default "memory". */
@@ -62,6 +64,7 @@ export function createRequester({
 	baseUrl,
 	orgId,
 	retries = 2,
+	timeoutMs = 15_000,
 	cacheTtlMs = 0,
 	cache = "memory",
 	diskCacheDir,
@@ -85,6 +88,7 @@ export function createRequester({
 		let lastError: unknown;
 
 		for (let attempt = 0; attempt < maxAttempts; attempt++) {
+			const timeout = AbortSignal.timeout(timeoutMs);
 			try {
 				const res = await fetch(url, {
 					method,
@@ -96,6 +100,7 @@ export function createRequester({
 							: {}),
 					},
 					body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+					signal: timeout,
 				});
 
 				if (res.status === 404) return null as T;
