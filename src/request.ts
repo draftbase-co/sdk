@@ -46,6 +46,10 @@ export interface RequestOptions {
 }
 
 const RETRYABLE_STATUSES = new Set([502, 503, 504]);
+// 429 waits don't count against `maxAttempts` (see below), so a sustained rate-limit storm
+// (e.g. a build fanning out many concurrent requests under one org's key) would otherwise
+// retry forever instead of surfacing a real, loggable error.
+const MAX_RATE_LIMIT_RETRIES = 5;
 
 function buildUrl(baseUrl: string, path: string, params?: RequestOptions["params"]) {
 	const url = new URL(path, baseUrl);
@@ -72,6 +76,21 @@ export function createRequester({
 	const store: CacheStore =
 		cache === "disk" ? createDiskCache(diskCacheDir) : createMemoryCache();
 
+	// The backend's rate limiter (`@fastify/rate-limit`) sends these on every response, not just
+	// on 429 — reading them lets this requester pace itself ahead of its budget running out
+	// instead of only reacting after a 429 already happened. Shared across all calls from this
+	// client, since the rate limit itself is per org/API key, not per call.
+	let rateLimitResetAt = 0;
+	let rateLimitRemaining = Infinity;
+
+	function trackRateLimit(res: Response) {
+		const remaining = Number(res.headers.get("x-ratelimit-remaining"));
+		const resetSeconds = Number(res.headers.get("x-ratelimit-reset"));
+		if (Number.isNaN(remaining) || Number.isNaN(resetSeconds)) return;
+		rateLimitRemaining = remaining;
+		rateLimitResetAt = Date.now() + resetSeconds * 1000;
+	}
+
 	return async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
 		const method = options.method ?? "GET";
 		const isRead = options.read ?? method === "GET";
@@ -86,8 +105,13 @@ export function createRequester({
 
 		const maxAttempts = isRead ? retries + 1 : 1;
 		let lastError: unknown;
+		let rateLimitRetries = 0;
 
 		for (let attempt = 0; attempt < maxAttempts; attempt++) {
+			if (rateLimitRemaining <= 0 && Date.now() < rateLimitResetAt) {
+				await wait(rateLimitResetAt - Date.now());
+			}
+
 			const timeout = AbortSignal.timeout(timeoutMs);
 			try {
 				const res = await fetch(url, {
@@ -102,13 +126,24 @@ export function createRequester({
 					body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
 					signal: timeout,
 				});
+				trackRateLimit(res);
 
 				if (res.status === 404) return null as T;
 
 				if (!res.ok) {
 					// 429 doesn't count against maxAttempts: it's the server pacing us, not failing us,
-					// so we wait it out (capped) instead of giving up and breaking builds under load.
+					// so we wait it out (capped) instead of giving up and breaking builds under load —
+					// but only up to MAX_RATE_LIMIT_RETRIES, so a sustained storm still surfaces a
+					// real, loggable error instead of hanging past the caller's own timeout.
 					if (res.status === 429) {
+						if (++rateLimitRetries > MAX_RATE_LIMIT_RETRIES) {
+							const body = await res.text();
+							throw new DraftbaseError(
+								429,
+								`Draftbase API error: ${method} ${url.pathname} -> 429: still rate-limited after ${MAX_RATE_LIMIT_RETRIES} retries: ${body}`,
+								"RATE_LIMITED",
+							);
+						}
 						const retryAfter = Number(res.headers.get("retry-after"));
 						await wait(
 							retryAfter > 0
