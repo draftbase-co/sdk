@@ -83,6 +83,8 @@ export interface ListEntriesOptions extends Record<string, string | number | boo
 	locale?: string;
 	status?: EntryStatus;
 	envId?: Environment;
+	/** Depth (0-5) to resolve `reference`/`media` fields into nested objects instead of raw ids.
+	 * Omitted entirely (not just 0) leaves those fields as raw id string(s). */
 	include?: number;
 	entryLinkFields?: string;
 	search?: string;

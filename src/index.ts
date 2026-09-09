@@ -63,6 +63,8 @@ export function createClient({
 				after = nextCursor;
 			}
 		},
+		/** `include`: depth (0-5) to resolve `reference`/`media` fields into nested objects instead
+		 * of raw ids — omitted entirely (not just 0) leaves those fields as raw id string(s), not an error. */
 		getEntry: <Fields = Record<string, unknown>>(
 			id: string,
 			envId: Environment = environment,
@@ -102,6 +104,8 @@ export function createClient({
 				request<Entry<Fields>[]>("/entries", {
 					params: { envId: environment, ...options },
 				}),
+			/** `include`: depth (0-5) to resolve `reference`/`media` fields into nested objects instead
+			 * of raw ids — omitted entirely (not just 0) leaves those fields as raw id string(s), not an error. */
 			get: <Fields = Record<string, unknown>>(
 				id: string,
 				envId: Environment = environment,

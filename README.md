@@ -25,6 +25,22 @@ Options: `apiKey` (required), `baseUrl` (default `https://api.draftbase.co`), `e
 
 Use a `delivery`-scoped key for the top-level `getEntries`/`getEntry`/`graphql` methods, and a `management`-scoped key for everything under `entries`, `contentTypes`, `media`, `webhooks`.
 
+### Staging/preview before publish
+
+A `preview`-scoped key is a drop-in replacement for a `delivery` key on the same top-level `getEntries`/`getEntry` methods — no code changes needed, just a different key. The difference: it serves every non-archived entry, including drafts and unpublished edits, instead of published-only content, and its responses are never cached (`Cache-Control: no-store`).
+
+Point a staging deploy or local dev server at a `preview` key so it can render real pages against draft content before publish, then point production at a `delivery` key so it only ever serves what's actually published:
+
+```ts
+// lib/draftbase.ts
+const isProd = process.env.NODE_ENV === "production";
+export const draftbase = createClient({
+	apiKey: isProd ? process.env.DRAFTBASE_DELIVERY_KEY! : process.env.DRAFTBASE_PREVIEW_KEY!,
+});
+```
+
+Create both keys from the dashboard (or `POST /orgs/api-keys` with `scope: "preview"` / `scope: "delivery"`) against the same environment — this is orthogonal to the `environment` option, which separates data by env, not by draft/published visibility.
+
 ## Framework quickstarts
 
 The client itself is framework-agnostic (plain Node.js, global `fetch`) — only the _calling convention_ changes per framework. Instantiate `createClient` once in a shared module and import it wherever you need content.
@@ -387,7 +403,7 @@ If you're an agent implementing Draftbase in a project, follow this checklist:
 
 1. **Install**: `pnpm add @draftbase/sdk` (or `npm`/`yarn` equivalent — detect the project's package manager first).
 2. **Never hardcode API keys.** Read `apiKey` from an environment variable (`DRAFTBASE_API_KEY` or similar) — add it to `.env.example` if the project has one, and confirm it's in `.gitignore`, don't commit it.
-3. **Pick the right key scope**: `delivery` key for read-only published content (`getEntries`/`getEntry`/`graphql`); `management` key for anything under `entries`/`contentTypes`/`media`/`webhooks`. Ask the user which they have if unclear — a `delivery` key cannot call management methods and will 401/403.
+3. **Pick the right key scope**: `delivery` key for read-only published content (`getEntries`/`getEntry`/`graphql`); `preview` key for the same read-only methods but including drafts/unpublished edits, e.g. a staging deploy previewing content before publish (see [Staging/preview before publish](#stagingpreview-before-publish)); `management` key for anything under `entries`/`contentTypes`/`media`/`webhooks`. Ask the user which they have if unclear — a `delivery`/`preview` key cannot call management methods and will 401/403.
 4. **All methods are async** and return typed data directly (no `.data` wrapper) — `entries.list()` etc. — except `getEntry`/`entries.get`, which resolve to `null` on a 404 instead of throwing. Handle that `null` case explicitly.
 5. **Don't wrap calls in retry loops** — reads already retry internally (see [Retries & caching](#retries--caching)); adding your own doubles the backoff.
 6. **Generate types before writing content-shape code**: run `draftbase types --api-key <management-key> --out <path>` first, then import the generated interfaces as the `Entry<T>` type param — don't hand-write field interfaces that can drift from the live schema.
