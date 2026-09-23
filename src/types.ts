@@ -156,12 +156,16 @@ export interface Asset {
 	status: AssetStatus;
 	width?: number;
 	height?: number;
+	/** Video only, in seconds — set by the media processor from ffprobe. */
+	duration?: number;
 	size?: number;
 	error?: string;
 	altText?: string;
 	createdAt: string;
 	/** Public CDN URL, or null if ASSETS_CDN_URL isn't configured on the backend. Only on `media.get`. */
 	url?: string | null;
+	/** Video only — CDN URL of the extracted poster-frame JPEG, or null. Only on `media.get`. */
+	posterUrl?: string | null;
 }
 
 export interface UploadUrlInput {
