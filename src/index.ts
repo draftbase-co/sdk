@@ -12,6 +12,7 @@ import type {
 	Environment,
 	GetEntriesOptions,
 	GetEntriesResult,
+	GetEntryOptions,
 	GraphqlResponse,
 	ListContentTypesOptions,
 	ListEntriesOptions,
@@ -64,16 +65,20 @@ export function createClient({
 			}
 		},
 		/** `include`: depth (0-5) to resolve `reference`/`media` fields into nested objects instead
-		 * of raw ids — omitted entirely (not just 0) leaves those fields as raw id string(s), not an error. */
+		 * of raw ids — omitted entirely (not just 0) leaves those fields as raw id string(s), not an error.
+		 * Pass an options object as the second argument instead to use `locale`. */
 		getEntry: <Fields = Record<string, unknown>>(
 			id: string,
-			envId: Environment = environment,
+			envIdOrOptions: Environment | GetEntryOptions = environment,
 			include?: number,
 			locales?: boolean,
 			entryLinkFields?: string,
 		) =>
 			request<Entry<Fields> | null>(`/delivery/entries/${id}`, {
-				params: { envId, include, locales, entryLinkFields },
+				params:
+					typeof envIdOrOptions === "string"
+						? { envId: envIdOrOptions, include, locales, entryLinkFields }
+						: { envId: environment, ...envIdOrOptions },
 			}),
 		/** Every published entry (across locales) sharing `id`'s locale group, including itself.
 		 * A thin wrapper over `getEntry(id, envId, undefined, true)`. */

@@ -51,7 +51,11 @@ export interface Entry<Fields = Record<string, unknown>> {
 
 export interface GetEntriesOptions extends Record<string, string | number | boolean | undefined> {
 	templateId?: string;
+	/** Exact locale match, unless `localeFallback` is set. */
 	locale?: string;
+	/** With `locale`: one entry per translation group — that locale, else the same language in
+	 * another region (`fr` matches `fr-CA`), else the org's default locale. */
+	localeFallback?: boolean;
 	/** Mutually exclusive with `skip`. */
 	after?: string;
 	limit?: number;
@@ -91,6 +95,18 @@ export interface ListEntriesOptions extends Record<string, string | number | boo
 	mode?: "text" | "semantic";
 	limit?: number;
 	skip?: number;
+}
+
+export interface GetEntryOptions {
+	envId?: Environment;
+	/** Depth (0-5) to resolve `reference`/`media` fields into nested objects instead of raw ids. */
+	include?: number;
+	/** Attach `localizations` — the entry's sibling locales. */
+	locales?: boolean;
+	entryLinkFields?: string;
+	/** Return this entry's translation in that locale instead — exact, else the same language in
+	 * another region (`fr` matches `fr-CA`), else the org's default locale, else the entry itself. */
+	locale?: string;
 }
 
 export interface GraphqlResponse<T> {

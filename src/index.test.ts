@@ -302,3 +302,19 @@ test("entries.update merges onto current fields; replace sends only what's given
 		{ fields: { title: "New" } },
 	]);
 });
+
+test("getEntry accepts an options object with locale", async () => {
+	let capturedUrl = "";
+	global.fetch = (async (url: string | URL) => {
+		capturedUrl = url.toString();
+		return new Response(JSON.stringify({}), { status: 200 });
+	}) as typeof fetch;
+
+	const client = createClient({ apiKey: "secret", baseUrl: "https://api.example.com" });
+	await client.getEntry("e1", { locale: "fr", include: 1 });
+
+	assert.equal(
+		capturedUrl,
+		"https://api.example.com/delivery/entries/e1?envId=production&locale=fr&include=1",
+	);
+});

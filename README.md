@@ -204,6 +204,17 @@ const all = await draftbase.entries.getLocalizations(enId); // any status
 
 An entry with no linked translations yet returns just itself (`localizations` is absent/`[]`). `locale` filters on `getEntries`/`entries.list` still work as before for listing one locale at a time — `locales`/`getLocalizations` is for pulling every locale of one specific entry, e.g. to build a language switcher.
 
+### Serving a locale with fallback
+
+Ask for a locale and get the closest translation: an exact match, else the same language in another region (`fr` matches `fr-CA`), else the org's default locale (the first in its locale list):
+
+```ts
+const entry = await draftbase.getEntry(id, { locale: "fr" }); // any id in the group works
+const { entries } = await draftbase.getEntries({ templateId, locale: "fr", localeFallback: true }); // one entry per group
+```
+
+Without `localeFallback`, `locale` on `getEntries` stays an exact match. On delivery, a translation's empty (`null`/missing) fields are filled from its group's default-locale entry, so shared values like a video or image only need setting once. Fields the translation sets itself always win.
+
 ## GraphQL
 
 Same delivery-scoped, published-only data as `getEntries`/`getEntry`, queryable as GraphQL (`Query.entries`, `Query.entry`, matching args including `envId`):
