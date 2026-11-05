@@ -59,7 +59,7 @@ function makeClient(overrides: Partial<MigrationClient> = {}): {
 		contentTypes: { create: async () => ({ id: `ct-${nextId++}` }) },
 		entries: {
 			create: async () => ({ id: `entry-${nextId++}` }),
-			update: async (id, fields) => {
+			replace: async (id, fields) => {
 				updateCalls.push({ id, fields });
 			},
 			updateStatus: async (id, status, publishedAt) => {
@@ -200,7 +200,7 @@ test("an entry with a reference that fails to resolve is retried on the next run
 						throw new Error("e3 unavailable");
 					return { id: `entry-${JSON.stringify(input.fields)}` };
 				},
-				update: async (id, fields) => {
+				replace: async (id, fields) => {
 					firstUpdateCalls.push({ id, fields });
 				},
 				updateStatus: async () => {},
@@ -218,7 +218,7 @@ test("an entry with a reference that fails to resolve is retried on the next run
 		const { client: secondClient, updateCalls: secondUpdateCalls } = makeClient({
 			entries: {
 				create: async (input) => ({ id: `entry-${JSON.stringify(input.fields)}` }),
-				update: async (id, fields) => {
+				replace: async (id, fields) => {
 					secondUpdateCalls.push({ id, fields });
 				},
 				updateStatus: async () => {},
@@ -249,7 +249,7 @@ test("migrate resumes from a checkpoint without recreating already-migrated item
 					}
 					return { id: `entry-${input.fields.title}` };
 				},
-				update: async () => {},
+				replace: async () => {},
 				updateStatus: async () => {},
 			},
 		});

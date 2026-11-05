@@ -101,7 +101,7 @@ export function createClient({
 		/** Read/write entries in any status. Use a `management`-scoped API key. */
 		entries: {
 			list: <Fields = Record<string, unknown>>(options: ListEntriesOptions = {}) =>
-				request<Entry<Fields>[]>("/entries", {
+				request<{ items: Entry<Fields>[]; total: number }>("/entries", {
 					params: { envId: environment, ...options },
 				}),
 			/** `include`: depth (0-5) to resolve `reference`/`media` fields into nested objects instead
@@ -132,7 +132,24 @@ export function createClient({
 					method: "POST",
 					body: { envId: environment, ...input },
 				}),
-			update: <Fields = Record<string, unknown>>(
+			/** Partial update: fields you omit keep their current value. Use `replace` to overwrite
+			 * the whole field set. */
+			update: async <Fields = Record<string, unknown>>(
+				id: string,
+				fields: Record<string, unknown>,
+			) => {
+				// read: false skips the response cache — merging onto a stale copy would revert fields.
+				const existing = await request<Entry<Fields> | null>(`/entries/${id}`, {
+					read: false,
+				});
+				if (!existing) return null;
+				return request<Entry<Fields>>(`/entries/${id}`, {
+					method: "PATCH",
+					body: { fields: { ...existing.fields, ...fields } },
+				});
+			},
+			/** Overwrites every field — any field you omit is cleared. */
+			replace: <Fields = Record<string, unknown>>(
 				id: string,
 				fields: Record<string, unknown>,
 			) => request<Entry<Fields>>(`/entries/${id}`, { method: "PATCH", body: { fields } }),

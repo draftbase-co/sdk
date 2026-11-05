@@ -220,11 +220,12 @@ Throws `GraphqlError` (with an `errors` array) if the response has GraphQL error
 ## Entries (management)
 
 ```ts
-await draftbase.entries.list({ contentTypeId, locale, status }); // any status, all filters optional
+await draftbase.entries.list({ contentTypeId, locale, status, limit, skip }); // -> { items, total }, any status, all filters optional
 await draftbase.entries.get(id); // null if not found
 await draftbase.entries.create({ contentTypeId, locale, fields }); // -> { id }, starts as "draft"
 await draftbase.entries.create({ contentTypeId, locale, fields, groupId }); // links as another locale of `groupId`'s entry — see Locales below
-await draftbase.entries.update(id, fields); // replaces fields, bumps version, snapshots a revision
+await draftbase.entries.update(id, fields); // partial: omitted fields keep their value; bumps version, snapshots a revision
+await draftbase.entries.replace(id, fields); // overwrites the whole field set — omitted fields are cleared
 await draftbase.entries.updateStatus(id, "published"); // draft | review | published | archived
 await draftbase.entries.rollback(id, version); // restore fields from a past revision
 await draftbase.entries.delete(id);

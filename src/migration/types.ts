@@ -76,7 +76,7 @@ export interface MigrationClient {
 			fields: Record<string, unknown>;
 			envId?: string;
 		}): Promise<{ id: string }>;
-		update(id: string, fields: Record<string, unknown>): Promise<unknown>;
+		replace(id: string, fields: Record<string, unknown>): Promise<unknown>;
 		updateStatus(id: string, status: EntryStatus, publishedAt?: string): Promise<unknown>;
 	};
 	media: {

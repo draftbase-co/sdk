@@ -283,3 +283,22 @@ test("cache: 'disk' persists across a fresh requester using the same directory",
 
 	assert.equal(calls, 1);
 });
+
+test("entries.update merges onto current fields; replace sends only what's given", async () => {
+	const patched: unknown[] = [];
+	global.fetch = (async (_url: string | URL, init?: RequestInit) => {
+		if (init?.method === "PATCH") patched.push(JSON.parse(init.body as string));
+		return new Response(JSON.stringify({ fields: { title: "Old", video: "v1" } }), {
+			status: 200,
+		});
+	}) as typeof fetch;
+
+	const client = createClient({ apiKey: "secret" });
+	await client.entries.update("e1", { title: "New" });
+	await client.entries.replace("e1", { title: "New" });
+
+	assert.deepEqual(patched, [
+		{ fields: { title: "New", video: "v1" } },
+		{ fields: { title: "New" } },
+	]);
+});

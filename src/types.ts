@@ -89,6 +89,8 @@ export interface ListEntriesOptions extends Record<string, string | number | boo
 	entryLinkFields?: string;
 	search?: string;
 	mode?: "text" | "semantic";
+	limit?: number;
+	skip?: number;
 }
 
 export interface GraphqlResponse<T> {

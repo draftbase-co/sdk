@@ -283,7 +283,7 @@ export async function migrate(
 				checkpoint.entryIds,
 				unresolved,
 			) as Record<string, unknown>;
-			if (!dryRun) await client.entries.update(newId, fields);
+			if (!dryRun) await client.entries.replace(newId, fields);
 			if (unresolved.length > 0) {
 				checkpoint.report.errors.push({
 					stage: "links",
