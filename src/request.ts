@@ -118,6 +118,8 @@ export function createRequester({
 					method,
 					headers: {
 						Authorization: `Bearer ${apiKey}`,
+						// Lets the API attribute traffic to the SDK; browsers silently keep their own UA.
+						"User-Agent": "draftbase-sdk",
 						...(orgId ? { "x-org-id": orgId } : {}),
 						...(options.body !== undefined
 							? { "Content-Type": "application/json" }
